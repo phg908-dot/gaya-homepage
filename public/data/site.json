@@ -18,7 +18,9 @@
   "youtube": {
     "handle": "@가야부동산-w1w",
     "channelId": "UCNp6hmVYKNm5Cxv4bw56r9w",
-    "name": "양평가야부동산"
+    "name": "양평가야부동산",
+    "listingVideos": [],
+    "notListingVideos": []
   },
   "hiddenVideos": [],
   "kakaoMap": {

@@ -24,7 +24,7 @@
   // ── 상단 현황 (0인 항목은 숨김)
   const shorts = videos.filter((v) => v.isShort).length;
   const eups = new Set(listings.map((l) => R(l).eupmyeon).filter(Boolean)).size;
-  [[listings.length, "거래 가능 매물"], [videos.length, shorts ? `현장 영상 (쇼츠 ${shorts})` : "현장 영상"], [eups, "읍·면 지역"]]
+  [[listings.length, "거래 가능 매물"], [videos.length, "매물 영상"], [eups, "읍·면 지역"]]
     .filter(([n]) => n > 0)
     .forEach(([n, label]) => $("stats").append(el("li", null, el("b", { text: String(n) }), el("span", { text: label }))));
 

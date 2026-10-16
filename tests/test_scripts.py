@@ -119,6 +119,18 @@ class Normalize(unittest.TestCase):
         kept, dropped = build.filter_videos(vids, {1001}, {"eeeeeeeeeee"})
         self.assertEqual([v["id"] for v in kept], ["aaaaaaaaaaa", "ccccccccccc"])
 
+    def test_listing_video_classification(self):
+        yes = ["지평역 걸어서 450m! 양평 지평면 토지 660㎡(200평) 2억3천 #양평토지",
+               "정원과 밭까지 2,538㎡(768평) 양평 전원주택｜가야공인중개사 박홍균"]
+        no = ["농지 전수조사, 포상금 상한 10배의 정확한 뜻", "3억 전원주택이 정말 3천이 됐을까? 경매 최저가 계산",
+              "약 8,763만 원이 약 1억 6,787만 원으로", "농지 화장실 10제곱미터·주차장 25제곱미터", "지평막걸리 파는 곳"]
+        for t in yes:
+            self.assertTrue(build.is_listing_video({"id": "a" * 11, "title": t}), t)
+        for t in no:
+            self.assertFalse(build.is_listing_video({"id": "a" * 11, "title": t}), t)
+        self.assertTrue(build.is_listing_video({"id": "b" * 11, "title": "막걸리"}, force_in={"b" * 11}))
+        self.assertFalse(build.is_listing_video({"id": "c" * 11, "title": yes[0]}, force_out={"c" * 11}))
+
     def test_jsonld_cannot_break_out_of_script(self):
         out = build.ld_json({"name": "<!--<script></script>&"})
         self.assertNotIn("<", out)

@@ -245,6 +245,21 @@ def normalize_all(listings, warns):
     return out
 
 
+# 매물 영상 판별: 제목·설명에 면적(㎡·평)이 있고, 가격·매물 해시태그·사무소 서명 중 하나가 함께 있으면 매물 영상
+AREA_RE = re.compile(r"\d[\d,]*(?:\.\d+)?\s*(?:㎡|m²|평)")
+PRICE_RE = re.compile(r"\d+\s*억|\d[\d,]*\s*만\s*원|\d+\s*천(?!\s*원)")
+TAG_RE = re.compile(r"#\S*(?:토지|전원주택|임야|농가|매매|전세|월세|상가|쉼터)|가야공인중개사")
+
+
+def is_listing_video(v, linked_ids=frozenset(), force_in=frozenset(), force_out=frozenset()):
+    if v.get("id") in force_out:
+        return False
+    if v.get("id") in force_in or v.get("id") in linked_ids or cited_numbers(v):
+        return True
+    t = v.get("title", "")
+    return bool(AREA_RE.search(t) and (PRICE_RE.search(t) or TAG_RE.search(t)))
+
+
 def cited_numbers(v):
     text = f"{v.get('title', '')}\n{v.get('description', '')}"
     return {int(n) for m in NO_RE.finditer(text) for n in re.findall(r"\d{3,6}", m.group(1))}
@@ -828,6 +843,15 @@ def main():
         live_nos = {l["no"] for l in listings if publishable(l)}
         closed = {int(x) for x in site.get("closedListingNos") or [] if str(x).isdigit()}
         blocked_vids = {v for l in listings if l["no"] not in live_nos for v in l.get("videoIds") or []}
+        yt = site.get("youtube") or {}
+        force_in = {yt_id(x) for x in as_list(yt.get("listingVideos"))} - {None}
+        force_out = {yt_id(x) for x in as_list(yt.get("notListingVideos"))} - {None}
+        linked = {v for l in listings if l["no"] in live_nos for v in l.get("videoIds") or []}
+        # 홈페이지에는 본편(쇼츠 제외) 매물 영상만 싣는다 — 쇼츠 여부가 확인되지 않은 영상도 제외
+        non_listing = [v["id"] for v in videos if v.get("isShort") is not False or not is_listing_video(v, linked, force_in, force_out)]
+        if non_listing:
+            print(f"쇼츠·정보 영상 등 {len(non_listing)}개는 홈페이지에 싣지 않습니다 (본편 매물 영상만 게시)")
+        videos = [v for v in videos if v["id"] not in set(non_listing)]
         kept, dropped = filter_videos(videos, live_nos, blocked_vids, closed)
         if dropped:
             print(f"광고할 수 없는 매물(계약완료·샘플·명시사항 누락·목록에 없는 번호)을 소개하는 영상 {len(dropped)}개를 배포본에서 뺐습니다: {', '.join(dropped)}")

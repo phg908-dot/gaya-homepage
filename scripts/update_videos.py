@@ -131,6 +131,10 @@ def _walk(node, out: list, short: bool) -> None:
         vr = node.get("videoRenderer") or node.get("gridVideoRenderer")
         if isinstance(vr, dict) and vr.get("videoId"):
             out.append({"id": vr["videoId"], "title": _text(vr.get("title")), "isShort": short})
+        lk = node.get("lockupViewModel")  # 2025년 이후 동영상 탭 구조
+        if isinstance(lk, dict) and lk.get("contentId") and "VIDEO" in str(lk.get("contentType", "VIDEO")):
+            meta = ((lk.get("metadata") or {}).get("lockupMetadataViewModel") or {})
+            out.append({"id": lk["contentId"], "title": _text(meta.get("title")), "isShort": short})
         rr = node.get("reelItemRenderer")
         if isinstance(rr, dict) and rr.get("videoId"):
             out.append({"id": rr["videoId"], "title": _text(rr.get("headline")), "isShort": True})
@@ -167,12 +171,19 @@ def fetch_channel_pages(channel_id: str) -> list[dict]:
     return found
 
 
+WATCH_FAIL: dict = {}
+
+
 def fetch_watch_details(vid: str) -> dict:
     """영상 페이지에서 게시일·설명란을 읽는다 (설명란의 매물번호로 매물과 연결하기 위해)"""
     status, body = http(f"https://www.youtube.com/watch?v={vid}&hl=ko")
-    if status != 200:
-        return {}
     t = body.decode("utf-8", "replace")
+    if status != 200 or '"publishDate"' not in t:
+        reason = ("로봇 확인 화면" if ("confirm you" in t.lower() or "LOGIN_REQUIRED" in t or "봇이 아닌지" in t)
+                  else f"응답 {status}" if status != 200 else "게시일 정보 없음")
+        WATCH_FAIL[reason] = WATCH_FAIL.get(reason, 0) + 1
+        if status != 200:
+            return {}
     out = {}
     m = re.search(r'"publishDate":"([^"]+)"', t) or re.search(r'itemprop="datePublished" content="([^"]+)"', t) or re.search(r'"uploadDate":"([^"]+)"', t)
     if m:
@@ -278,6 +289,8 @@ def main() -> int:
                 time.sleep(0.3)
         if not fresh and not old.get("videos"):
             note("채널에서 공개 영상을 찾지 못했습니다 (아직 공개 영상이 없거나 유튜브가 응답을 막았습니다)")
+        if WATCH_FAIL:
+            note("영상 상세(게시일·설명란)를 읽지 못한 영상: " + ", ".join(f"{k} {v}개" for k, v in WATCH_FAIL.items()))
     api_key = os.environ.get("YT_API_KEY", "").strip()
     if api_key:
         try:
@@ -286,6 +299,10 @@ def main() -> int:
             print(f"Data API 건너뜀: {exc}", file=sys.stderr)
 
     by_id = {v["id"]: v for v in old.get("videos", []) if isinstance(v, dict) and v.get("id")}
+    now = time.time()
+    for i, v in enumerate(fresh):  # 앞쪽(최신)일수록 늦은 시각 → 최신순 정렬이 유지됨
+        if v["id"] not in by_id:
+            v["firstSeen"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now - i))
     feed_ids = set()
     for v in fresh:
         feed_ids.add(v["id"])
@@ -319,7 +336,11 @@ def main() -> int:
     for vid in removed:
         by_id.pop(vid, None)
 
-    videos = sorted(by_id.values(), key=lambda v: v.get("published", ""), reverse=True)
+    def when(v):  # 게시일(시간대 포함 가능)을 UTC 기준 문자열로 맞추고, 없으면 처음 발견한 시각
+        p = v.get("published") or ""
+        m = re.match(r"(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2}:\d{2}))?", p)
+        return (m.group(1) + "T" + (m.group(2) or "00:00:00")) if m else (v.get("firstSeen") or "")
+    videos = sorted(by_id.values(), key=when, reverse=True)
     if videos == old.get("videos") and channel_id == old.get("channelId"):
         print(f"변경 없음 ({len(videos)}개)")
         return 0

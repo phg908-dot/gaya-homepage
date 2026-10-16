@@ -40,8 +40,13 @@
     const liveNos = new Set(live.map((l) => l.no));
     const closed = new Set(asList(site.closedListingNos).map(Number));
     const blocked = new Set((Array.isArray(listings) ? listings : []).filter((l) => !liveNos.has(Number(l.no))).flatMap((l) => asList(l.videoIds).map(ytId)));
+    const yt = site.youtube || {};
+    const forceIn = new Set(asList(yt.listingVideos).map(ytId).filter(Boolean));
+    const forceOut = new Set(asList(yt.notListingVideos).map(ytId).filter(Boolean));
+    const linked = new Set(live.flatMap((l) => l.videoIds));
     const vids = ((videos && Array.isArray(videos.videos)) ? videos.videos : []).filter((v) => {
       if (!v || ytId(v.id) !== v.id || hidden.has(v.id) || blocked.has(v.id)) return false;
+      if (v.isShort !== false || !isListingVideo(v, linked, forceIn, forceOut)) return false;  // 본편(쇼츠 제외) 매물 영상만
       const nums = citedNumbers(v);
       return nums.every((n) => liveNos.has(n) && !closed.has(n));
     });
@@ -52,6 +57,18 @@
   // 영상 ↔ 매물 연결: listings[].videoIds + 영상 제목/설명의 "No.1234", "매물번호 1234, 1235"
   // (영단어 속 'no'는 제외 — 구형 브라우저 호환을 위해 lookbehind 대신 앞 글자를 함께 매칭)
   const NO_RE = /(^|[^A-Za-z])(?:No\.?|매물\s*번호)\s*[:#.]?\s*(\d{3,6}(?:\s*[,·/]\s*\d{3,6})*)/gi;
+  // 매물 영상 판별 (scripts/build.py is_listing_video 와 같은 규칙):
+  // 제목에 면적(㎡·평)이 있고 가격·매물 해시태그·사무소 서명 중 하나가 함께 있으면 매물 영상
+  const AREA_RE = /\d[\d,]*(?:\.\d+)?\s*(?:㎡|m²|평)/;
+  const PRICE_RE = /\d+\s*억|\d[\d,]*\s*만\s*원|\d+\s*천(?!\s*원)/;
+  const TAG_RE = /#\S*(?:토지|전원주택|임야|농가|매매|전세|월세|상가|쉼터)|가야공인중개사/;
+  function isListingVideo(v, linked, forceIn, forceOut) {
+    if (forceOut.has(v.id)) return false;
+    if (forceIn.has(v.id) || linked.has(v.id) || citedNumbers(v).length) return true;
+    const t = v.title || "";
+    return AREA_RE.test(t) && (PRICE_RE.test(t) || TAG_RE.test(t));
+  }
+
   function citedNumbers(v) {
     const out = [];
     const text = (v.title || "") + "\n" + (v.description || "");

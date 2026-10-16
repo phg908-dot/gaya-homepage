@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>현장 영상 · 가야공인중개사사무소</title>
-  <meta name="description" content="가야공인중개사사무소 유튜브 현장 영상 모음 — 양평 토지·전원주택·농가주택">
+  <title>매물 영상 · 가야공인중개사사무소</title>
+  <meta name="description" content="가야공인중개사사무소 유튜브 매물 영상 모음 — 양평 지평면 토지·전원주택">
   <meta name="theme-color" content="#1f3a5f">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ko_KR">
   <meta name="twitter:card" content="summary_large_image">
   <meta property="og:site_name" content="가야공인중개사사무소">
-  <meta property="og:title" content="현장 영상 · 가야공인중개사사무소">
-  <meta property="og:description" content="양평 토지·전원주택·농가주택 현장 영상 모음">
+  <meta property="og:title" content="매물 영상 · 가야공인중개사사무소">
+  <meta property="og:description" content="양평 토지·전원주택 매물 영상 모음">
   <meta property="og:image" content="images/og.png">
   <!--head-->
   <link rel="icon" href="images/icon.svg" type="image/svg+xml">
@@ -38,15 +38,13 @@
 
   <main class="wrap page" id="main">
     <div class="sec-head">
-      <h1>현장 영상 <span class="count" id="count"></span></h1>
+      <h1>매물 영상 <span class="count" id="count"></span></h1>
       <a class="more-link" data-youtube href="#" target="_blank" rel="noopener">유튜브 채널 구독 →</a>
     </div>
     <div class="vtools">
       <div class="chips" role="group" aria-label="영상 종류">
         <button type="button" class="chip" data-kind="" aria-pressed="true">전체</button>
-        <button type="button" class="chip" data-kind="video" aria-pressed="false">일반 영상</button>
-        <button type="button" class="chip" data-kind="short" aria-pressed="false">쇼츠</button>
-        <button type="button" class="chip" data-kind="linked" aria-pressed="false">매물 연결됨</button>
+        <button type="button" class="chip" data-kind="linked" aria-pressed="false">매물 정보 연결됨</button>
       </div>
       <label class="sr" for="vq">영상 검색</label>
       <input id="vq" type="search" placeholder="제목·설명 검색">
@@ -84,7 +82,7 @@
         words.every((w) => ((v.title || "") + " " + (v.description || "")).toLowerCase().includes(w)));
       $("count").textContent = rows.length + "개";
       $("empty").hidden = rows.length > 0;
-      $("empty").textContent = videos.length ? "조건에 맞는 영상이 없습니다." : "새 영상을 준비하고 있습니다.";
+      $("empty").textContent = videos.length ? "조건에 맞는 영상이 없습니다." : "새 매물 영상을 준비하고 있습니다.";
       if (announceNext) { G.announce(rows.length ? `영상 ${rows.length}개` : "조건에 맞는 영상이 없습니다"); announceNext = false; }
       $("videoGrid").replaceChildren(...rows.map((v) => el("article", { class: "vcard" },
         G.videoFacade(v.id, v.title, { short: v.isShort }),

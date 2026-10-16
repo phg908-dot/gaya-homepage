@@ -11,8 +11,10 @@ const PORT = 8700 + Math.floor(Math.random() * 90);
 const BASE = `http://127.0.0.1:${PORT}/`;
 const VIDS = { channelId: "UCx", updated: "", videos: [
   { id: "aaaaaaaaaa1", title: "지평면 전원주택 현장 매물번호 1001", published: "2026-10-15T09:00:00+00:00", description: "", isShort: false },
-  { id: "aaaaaaaaaa2", title: "토지 쇼츠 No.1002", published: "2026-10-14T09:00:00+00:00", description: "", isShort: true },
+  { id: "aaaaaaaaaa2", title: "토지 영상 No.1002", published: "2026-10-14T09:00:00+00:00", description: "", isShort: false },
   { id: "aaaaaaaaaa3", title: "양평 토지 체크리스트", published: "2026-10-10T09:00:00+00:00", description: "", isShort: false },
+  { id: "aaaaaaaaaa4", title: "개울 옆 양평 지평 전원주택지 1,855㎡(562평) 2억3천 #양평토지", published: "2026-10-09T09:00:00+00:00", description: "", isShort: false },
+  { id: "aaaaaaaaaa5", title: "양평 지평면 토지 330㎡(100평) 1억2천 #양평토지", published: "2026-10-08T09:00:00+00:00", description: "", isShort: true },
 ] };
 
 let failed = 0;
@@ -135,11 +137,9 @@ async function page(browser, opts = {}) {
     p = await page(browser);
     await p.goto(BASE + "videos.html");
     await p.waitForSelector(".vcard");
-    ok(await p.locator(".vcard").count() === 3, "영상 3개");
-    await p.click('.chip[data-kind="short"]');
-    ok(await p.locator(".vcard").count() === 1, "쇼츠 필터");
+    ok(await p.locator(".vcard").count() === 3, "본편 매물 영상만 표시 (쇼츠·정보 영상 제외)");
     await p.click('.chip[data-kind="linked"]');
-    ok(await p.locator(".vcard").count() === 2, "매물 연결 필터");
+    ok(await p.locator(".vcard").count() === 2, "매물 정보 연결 필터");
     await p.click(".yt-btn");
     ok(await p.evaluate(() => document.activeElement && document.activeElement.tagName === "IFRAME"), "재생 시 플레이어로 포커스");
 
