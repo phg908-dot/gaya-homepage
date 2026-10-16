@@ -121,7 +121,7 @@
           el("h3", { text: v.title || "매물 영상" }))),
       el("p", { class: "card-actions" },
         el("a", { class: "btn gold", href: watch, target: "_blank", rel: "noopener", text: "영상 보기" }),
-        el("a", { class: "btn navy", href: tel, text: "전화하기" })));
+        el("a", { class: "btn navy card-call", href: tel, text: "전화하기" })));
   }
 
   let lastCount = -1;

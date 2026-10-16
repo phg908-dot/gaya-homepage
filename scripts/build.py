@@ -862,7 +862,7 @@ def static_video_card(v):
             f'<div class="card-body"><p class="meta">{escape(meta)}</p>'
             f'<h3>{escape(title)}</h3></div></div>'
             f'<p class="card-actions"><a class="btn gold" href="{watch}" target="_blank" rel="noopener">영상 보기</a>'
-            f'<a class="btn navy" href="tel:01034060071">전화하기</a></p>'
+            f'<a class="btn navy card-call" href="tel:01034060071">전화하기</a></p>'
             f"</article>")
 
 

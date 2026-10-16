@@ -107,9 +107,32 @@ async function page(browser, opts = {}) {
     await p.goto(BASE);
     await p.waitForSelector("#cards .card");
     ok(await p.locator("#cards .card").count() >= 1, "매물 글이 없으면 현장 영상을 매물로 보여 줌");
+    const watch = p.locator("#cards .video-listing a").filter({ hasText: "영상 보기" }).first();
     const phone = p.locator("#cards .video-listing a").filter({ hasText: "전화하기" }).first();
-    await phone.scrollIntoViewIfNeeded();
-    const phoneCheck = await phone.evaluate((a) => {
+    ok(await watch.isVisible(), "컴퓨터에서도 영상 보기는 보임");
+    ok((await phone.count()) >= 1 && !(await phone.isVisible()) && (await phone.getAttribute("href")) === "tel:01034060071", "컴퓨터에서는 영상 카드 전화하기를 숨김");
+    const narrow = await page(browser, { listings: [] });
+    await narrow.setViewportSize({ width: 420, height: 800 });
+    await narrow.goto(BASE);
+    await narrow.waitForSelector("#cards .video-listing");
+    ok(!(await narrow.locator("#cards .video-listing .card-call").first().isVisible()) && await narrow.locator("#cards .video-listing a").filter({ hasText: "영상 보기" }).first().isVisible(), "좁은 창이라도 마우스가 있으면 전화하기만 숨김");
+    await narrow.context().close();
+    ok((await p.textContent("#listTitle")).includes("매물 영상"), "제목이 매물 영상");
+    ok(!(await p.textContent("#listTitle")).includes("0건"), "0건을 보여 주지 않음");
+    ok(!(await p.locator("body").innerText()).includes("전체 매물 0"), "빈 목록 문구 없음");
+    await p.click('#cats .cat[data-type="토지"]');
+    ok(await p.locator("#cards .card").count() >= 1, "영상도 토지 버튼으로 거름");
+    ok(!(await p.textContent("#stats")).includes("0 거래"), "0인 현황 숨김");
+    ok(p.errors.length === 0, "JS 오류 없음 " + p.errors.join(" | "));
+
+    console.log("스마트폰 영상 카드 전화");
+    p = await page(browser, { listings: [], mobile: true });
+    await p.goto(BASE);
+    await p.waitForSelector("#cards .video-listing .card-call");
+    const cardCall = p.locator("#cards .video-listing .card-call").first();
+    const see = p.locator("#cards .video-listing a").filter({ hasText: "영상 보기" }).first();
+    await cardCall.scrollIntoViewIfNeeded();
+    const phoneCheck = await cardCall.evaluate((a) => {
       const r = a.getBoundingClientRect();
       const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
       const overlay = a.closest("article").querySelector(".card-link").getBoundingClientRect();
@@ -120,9 +143,10 @@ async function page(browser, opts = {}) {
         onclick: a.hasAttribute("onclick") || typeof a.onclick === "function",
         hitIsSelf: hit === a || (hit && a.contains(hit)),
         overlaps,
+        shown: getComputedStyle(a).display !== "none",
       };
     });
-    ok(phoneCheck.href === "tel:01034060071" && !phoneCheck.nested && !phoneCheck.onclick && phoneCheck.hitIsSelf && !phoneCheck.overlaps, "영상 카드 전화하기는 tel:01034060071 이고 영상 링크 밖");
+    ok(await see.isVisible() && phoneCheck.shown && phoneCheck.href === "tel:01034060071" && !phoneCheck.nested && !phoneCheck.onclick && phoneCheck.hitIsSelf && !phoneCheck.overlaps, "스마트폰 전화하기는 tel:01034060071 이고 영상 링크 밖");
     const popup = p.waitForEvent("popup", { timeout: 800 }).catch(() => null);
     await p.evaluate(() => {
       document.addEventListener("click", (e) => {
@@ -130,15 +154,8 @@ async function page(browser, opts = {}) {
         if (a) { e.preventDefault(); window.__dialed = a.getAttribute("href"); }
       }, true);
     });
-    await phone.click();
-    ok((await p.evaluate(() => window.__dialed)) === "tel:01034060071" && (await popup) === null && !p.url().includes("youtube"), "전화하기를 눌러도 영상이 열리지 않음");
-    ok((await p.textContent("#listTitle")).includes("매물 영상"), "제목이 매물 영상");
-    ok(!(await p.textContent("#listTitle")).includes("0건"), "0건을 보여 주지 않음");
-    ok(!(await p.locator("body").innerText()).includes("전체 매물 0"), "빈 목록 문구 없음");
-    await p.click('#cats .cat[data-type="토지"]');
-    ok(await p.locator("#cards .card").count() >= 1, "영상도 토지 버튼으로 거름");
-    ok(!(await p.textContent("#stats")).includes("0 거래"), "0인 현황 숨김");
-    ok(p.errors.length === 0, "JS 오류 없음 " + p.errors.join(" | "));
+    await cardCall.click();
+    ok((await p.evaluate(() => window.__dialed)) === "tel:01034060071" && (await popup) === null && !p.url().includes("youtube"), "스마트폰에서 전화하기를 눌러도 영상이 열리지 않음");
 
     console.log("더 보기 (30건)");
     const base = JSON.parse(fs.readFileSync(path.join(SITE, "public/data/listings.json"), "utf8"))[1];

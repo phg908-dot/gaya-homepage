@@ -145,6 +145,11 @@ select:focus, input:focus, textarea:focus { border-color: var(--navy); outline: 
 .card-actions { position: relative; z-index: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; padding: 0 16px 18px; }
 .video-listing .card-body { padding-bottom: 8px; }
 .card-actions a, a[href^="tel:"] { position: relative; z-index: 5; }
+/* 영상 카드의 전화하기는 스마트폰에서만. 넓은 화면이거나 마우스가 있으면 영상 보기만 둔다. */
+@media (min-width: 900px), (pointer: fine) {
+  .video-listing .card-actions { grid-template-columns: 1fr; }
+  .video-listing .card-actions a[href^="tel:"] { display: none; }
+}
 .card-media .yt-play { position: absolute; left: 50%; top: 50%; width: 72px; height: 50px; transform: translate(-50%, -50%); background: #c00; border-radius: 14px; pointer-events: none; }
 .card-media .yt-play::after { content: ""; position: absolute; left: 30px; top: 14px; border-left: 18px solid #fff; border-top: 11px solid transparent; border-bottom: 11px solid transparent; }
 .sum { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

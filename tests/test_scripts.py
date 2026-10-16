@@ -160,7 +160,7 @@ class Normalize(unittest.TestCase):
 
     def test_video_card_phone_is_not_inside_watch_link(self):
         html = build.static_video_card({"id": "abcdefghijk", "title": "지평면 토지 330㎡", "published": "2026-10-02"})
-        self.assertIn('href="tel:01034060071">전화하기', html)
+        self.assertIn('class="btn navy card-call" href="tel:01034060071">전화하기', html)
         overlay = re.search(r'<a class="card-link".*?</a>', html, re.S).group(0)
         self.assertNotIn("tel:", overlay)
         self.assertLess(html.index("</h3></div></div><p class=\"card-actions\">"), html.index("tel:01034060071"))
