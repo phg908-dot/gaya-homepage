@@ -38,6 +38,7 @@
     })).filter((l) => Number.isInteger(l.no) && l.no > 0 && LIVE.has(l.status) && !DONE.has(l.status));
     // 매물번호를 언급하는 영상은 그 번호가 모두 게시 중인 매물일 때만 표시 (계약완료 매물 영상 노출 방지)
     const liveNos = new Set(live.map((l) => l.no));
+    const excludedNos = new Set((Array.isArray(listings) ? listings : []).map((l) => Number(l.no)).filter((n) => Number.isInteger(n) && !liveNos.has(n)));
     const closed = new Set(asList(site.closedListingNos).map(Number));
     const blocked = new Set((Array.isArray(listings) ? listings : []).filter((l) => !liveNos.has(Number(l.no))).flatMap((l) => asList(l.videoIds).map(ytId)));
     const yt = site.youtube || {};
@@ -47,8 +48,9 @@
     const vids = ((videos && Array.isArray(videos.videos)) ? videos.videos : []).filter((v) => {
       if (!v || ytId(v.id) !== v.id || hidden.has(v.id) || blocked.has(v.id)) return false;
       if (v.isShort !== false || !isListingVideo(v, linked, forceIn, forceOut)) return false;  // 본편(쇼츠 제외) 매물 영상만
-      const nums = citedNumbers(v);
-      return nums.every((n) => liveNos.has(n) && !closed.has(n));
+      if (!forceIn.has(v.id) && !linked.has(v.id) && !videoAgeOk(v, yt.maxAgeMonths ?? 12)) return false;  // 오래된 영상 제외
+      // 홈페이지 목록에서 게시하지 않는 번호(계약완료 등)를 언급한 영상은 제외 — 목록에 없는 번호는 그대로
+      return citedNumbers(v).every((n) => !closed.has(n) && !excludedNos.has(n));
     });
     linkVideos(live, vids);
     return { site, listings: live, videos: vids, failed: !Array.isArray(listings) };
@@ -62,11 +64,25 @@
   const AREA_RE = /\d[\d,]*(?:\.\d+)?\s*(?:㎡|m²|평)/;
   const PRICE_RE = /\d+\s*억|\d[\d,]*\s*만\s*원|\d+\s*천(?!\s*원)/;
   const TAG_RE = /#\S*(?:토지|전원주택|임야|농가|매매|전세|월세|상가|쉼터)|가야공인중개사/;
+  const DEAL_WORD_RE = /매매|매물|급매|분양|임대|전세|월세/;
+  const PROP_WORD_RE = /전원주택|토지|대지|임야|주택지|농막|주말농장|부지|단독주택|농가주택|상가|창고|공장/;
+  const MARKER_RE = /[◑▶■●]\s*(?:소재지|매물\s*번호|매물\s*종류)/;
+  const DONE_RE = /(?:매매|계약|거래|판매|매도|임대)\s*완료/;
   function isListingVideo(v, linked, forceIn, forceOut) {
     if (forceOut.has(v.id)) return false;
-    if (forceIn.has(v.id) || linked.has(v.id) || citedNumbers(v).length) return true;
-    const t = v.title || "";
+    if (forceIn.has(v.id) || linked.has(v.id)) return true;
+    const t = v.title || "", d = v.description || "";
+    if (DONE_RE.test(t) || DONE_RE.test(d.slice(0, 300))) return false;
+    if (citedNumbers(v).length || MARKER_RE.test(d)) return true;
+    if (DEAL_WORD_RE.test(t) && PROP_WORD_RE.test(t)) return true;
     return AREA_RE.test(t) && (PRICE_RE.test(t) || TAG_RE.test(t));
+  }
+  function videoAgeOk(v, maxMonths) {
+    if (!maxMonths) return true;
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v.published || "");
+    if (!m) return true;
+    const now = new Date();
+    return (now.getFullYear() - Number(m[1])) * 12 + (now.getMonth() + 1 - Number(m[2])) <= Number(maxMonths);
   }
 
   function citedNumbers(v) {

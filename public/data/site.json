@@ -20,7 +20,8 @@
     "channelId": "UCNp6hmVYKNm5Cxv4bw56r9w",
     "name": "양평가야부동산",
     "listingVideos": [],
-    "notListingVideos": []
+    "notListingVideos": [],
+    "maxAgeMonths": 12
   },
   "hiddenVideos": [],
   "kakaoMap": {

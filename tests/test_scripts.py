@@ -116,8 +116,9 @@ class Normalize(unittest.TestCase):
         vids = [{"id": "aaaaaaaaaaa", "title": "매물번호 1001"}, {"id": "bbbbbbbbbbb", "title": "매물번호 1001, 1005"},
                 {"id": "ccccccccccc", "title": "양평 이야기"}, {"id": "ddddddddddd", "title": "No.9999"},
                 {"id": "eeeeeeeeeee", "title": "번호 없음"}]
-        kept, dropped = build.filter_videos(vids, {1001}, {"eeeeeeeeeee"})
-        self.assertEqual([v["id"] for v in kept], ["aaaaaaaaaaa", "ccccccccccc"])
+        kept, dropped = build.filter_videos(vids, {1005}, {"eeeeeeeeeee"})
+        # 1005(게시 안 하는 매물) 언급 영상과 차단 영상만 빠지고, 목록에 없는 번호(9999)는 그대로
+        self.assertEqual([v["id"] for v in kept], ["aaaaaaaaaaa", "ccccccccccc", "ddddddddddd"])
 
     def test_listing_video_classification(self):
         yes = ["지평역 걸어서 450m! 양평 지평면 토지 660㎡(200평) 2억3천 #양평토지",
@@ -128,6 +129,11 @@ class Normalize(unittest.TestCase):
             self.assertTrue(build.is_listing_video({"id": "a" * 11, "title": t}), t)
         for t in no:
             self.assertFalse(build.is_listing_video({"id": "a" * 11, "title": t}), t)
+        self.assertTrue(build.is_listing_video({"id": "a" * 11, "title": "(급매)양평 임야에 접한 숲세권 양평전원주택지 매매"}))
+        self.assertTrue(build.is_listing_video({"id": "a" * 11, "title": "개울 옆 땅", "description": "◑ 소재지 : 경기도 양평군"}))
+        self.assertFalse(build.is_listing_video({"id": "a" * 11, "title": "(매매완료)6천인하! 양평전원주택급매"}))
+        self.assertTrue(build.video_age_ok({"published": "2026-01-10"}, 12, today=build.date(2026, 10, 16)))
+        self.assertFalse(build.video_age_ok({"published": "2024-12-05"}, 12, today=build.date(2026, 10, 16)))
         self.assertTrue(build.is_listing_video({"id": "b" * 11, "title": "막걸리"}, force_in={"b" * 11}))
         self.assertFalse(build.is_listing_video({"id": "c" * 11, "title": yes[0]}, force_out={"c" * 11}))
 

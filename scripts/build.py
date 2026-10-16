@@ -245,19 +245,44 @@ def normalize_all(listings, warns):
     return out
 
 
-# 매물 영상 판별: 제목·설명에 면적(㎡·평)이 있고, 가격·매물 해시태그·사무소 서명 중 하나가 함께 있으면 매물 영상
+# 매물 영상 판별 (공용 규칙 — public/assets/js/common.js isListingVideo 와 같음)
+#  매물: ① 매물번호 언급 ② 설명란에 '◑ 소재지'·'▶매물번호' 같은 매물 표시 ③ 제목에 매매·급매 등 + 매물 종류
+#        ④ 제목에 면적(㎡·평) + 가격·매물 해시태그·사무소 서명
+#  제외: 제목·설명에 '매매완료' 등 거래 완료 표시 (계약 끝난 매물 광고 금지)
 AREA_RE = re.compile(r"\d[\d,]*(?:\.\d+)?\s*(?:㎡|m²|평)")
 PRICE_RE = re.compile(r"\d+\s*억|\d[\d,]*\s*만\s*원|\d+\s*천(?!\s*원)")
 TAG_RE = re.compile(r"#\S*(?:토지|전원주택|임야|농가|매매|전세|월세|상가|쉼터)|가야공인중개사")
+DEAL_WORD_RE = re.compile(r"매매|매물|급매|분양|임대|전세|월세")
+PROP_WORD_RE = re.compile(r"전원주택|토지|대지|임야|주택지|농막|주말농장|부지|단독주택|농가주택|상가|창고|공장")
+MARKER_RE = re.compile(r"[◑▶■●]\s*(?:소재지|매물\s*번호|매물\s*종류)")
+DONE_RE = re.compile(r"(?:매매|계약|거래|판매|매도|임대)\s*완료")
 
 
 def is_listing_video(v, linked_ids=frozenset(), force_in=frozenset(), force_out=frozenset()):
     if v.get("id") in force_out:
         return False
-    if v.get("id") in force_in or v.get("id") in linked_ids or cited_numbers(v):
+    if v.get("id") in force_in or v.get("id") in linked_ids:
         return True
-    t = v.get("title", "")
+    t, d = v.get("title", ""), v.get("description", "")
+    if DONE_RE.search(t) or DONE_RE.search(d[:300]):
+        return False
+    if cited_numbers(v) or MARKER_RE.search(d):
+        return True
+    if DEAL_WORD_RE.search(t) and PROP_WORD_RE.search(t):
+        return True
     return bool(AREA_RE.search(t) and (PRICE_RE.search(t) or TAG_RE.search(t)))
+
+
+def video_age_ok(v, max_months, today=None):
+    """오래된 매물 영상은 이미 거래됐을 가능성이 커서 기본으로 싣지 않음 (게시일을 모르면 싣는다)"""
+    if not max_months:
+        return True
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", str(v.get("published") or ""))
+    if not m:
+        return True
+    today = today or date.today()
+    pub = date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    return (today.year - pub.year) * 12 + (today.month - pub.month) <= int(max_months)
 
 
 def cited_numbers(v):
@@ -265,12 +290,13 @@ def cited_numbers(v):
     return {int(n) for m in NO_RE.finditer(text) for n in re.findall(r"\d{3,6}", m.group(1))}
 
 
-def filter_videos(videos, live_nos, blocked_vids, closed=()):
-    """매물번호를 언급하는 영상은 그 번호가 모두 게시 중인 매물일 때만 남긴다 (계약완료 영상 노출 방지)."""
+def filter_videos(videos, excluded_nos, blocked_vids, closed=()):
+    """홈페이지 매물 목록에서 게시하지 않는 번호(계약완료·샘플·명시사항 누락)나 closedListingNos 를 언급한 영상은 뺀다.
+    목록에 아예 없는 번호(유튜브에서만 쓰는 매물번호)는 그대로 둔다."""
     kept, dropped = [], []
     for v in videos:
         nums = cited_numbers(v)
-        if v["id"] in blocked_vids or (nums & set(closed)) or (nums and not nums <= live_nos):
+        if v["id"] in blocked_vids or (nums & (set(closed) | set(excluded_nos))):
             dropped.append(v["id"])
         else:
             kept.append(v)
@@ -847,12 +873,16 @@ def main():
         force_in = {yt_id(x) for x in as_list(yt.get("listingVideos"))} - {None}
         force_out = {yt_id(x) for x in as_list(yt.get("notListingVideos"))} - {None}
         linked = {v for l in listings if l["no"] in live_nos for v in l.get("videoIds") or []}
-        # 홈페이지에는 본편(쇼츠 제외) 매물 영상만 싣는다 — 쇼츠 여부가 확인되지 않은 영상도 제외
-        non_listing = [v["id"] for v in videos if v.get("isShort") is not False or not is_listing_video(v, linked, force_in, force_out)]
+        # 홈페이지에는 본편(쇼츠 제외) 매물 영상만 싣는다 — 쇼츠 여부가 확인되지 않은 영상, 오래된 영상(기본 12개월)도 제외
+        max_age = yt.get("maxAgeMonths", 12)
+        non_listing = [v["id"] for v in videos
+                       if v.get("isShort") is not False or not is_listing_video(v, linked, force_in, force_out)
+                       or (v["id"] not in force_in and v["id"] not in linked and not video_age_ok(v, max_age))]
         if non_listing:
-            print(f"쇼츠·정보 영상 등 {len(non_listing)}개는 홈페이지에 싣지 않습니다 (본편 매물 영상만 게시)")
+            print(f"쇼츠·정보 영상·오래된 영상 등 {len(non_listing)}개는 홈페이지에 싣지 않습니다 (본편 매물 영상만 게시)")
         videos = [v for v in videos if v["id"] not in set(non_listing)]
-        kept, dropped = filter_videos(videos, live_nos, blocked_vids, closed)
+        excluded_nos = {l["no"] for l in listings if isinstance(l.get("no"), int)} - live_nos
+        kept, dropped = filter_videos(videos, excluded_nos, blocked_vids, closed)
         if dropped:
             print(f"광고할 수 없는 매물(계약완료·샘플·명시사항 누락·목록에 없는 번호)을 소개하는 영상 {len(dropped)}개를 배포본에서 뺐습니다: {', '.join(dropped)}")
         vjson = dict(vdata) if isinstance(vdata, dict) else {}
