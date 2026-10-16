@@ -108,17 +108,20 @@
   function videoCard(v) {
     const cat = videoCategory(v);
     const watch = "https://www.youtube.com/watch?v=" + encodeURIComponent(v.id);
+    const tel = "tel:" + String((site.office && site.office.tel) || "010-3406-0071").replace(/[^0-9+]/g, "");
+    // 전화 버튼은 영상 링크 밖에 둔다. 카드 전체를 덮는 링크 안에 있으면 전화 대신 영상이 열린다.
     return el("article", { class: "card video-listing", id: "v" + v.id },
-      el("a", { class: "card-link", href: watch, target: "_blank", rel: "noopener", "aria-label": (v.title || "영상") + " 영상 보기" }),
-      el("div", { class: "card-media" },
-        el("img", { src: G.thumb(v.id), alt: "", loading: "lazy", decoding: "async" }),
-        el("span", { class: "yt-play", "aria-hidden": "true" })),
-      el("div", { class: "card-body" },
-        el("p", { class: "meta" }, [cat, G.fmtDate(v.published)].filter(Boolean).join(" · ")),
-        el("h3", { text: v.title || "매물 영상" }),
-        el("p", { class: "card-actions" },
-          el("a", { class: "btn gold", href: watch, target: "_blank", rel: "noopener", text: "영상 보기" }),
-          el("a", { class: "btn navy", href: "tel:" + String(site.office.tel || "").replace(/[^0-9+]/g, ""), text: "전화하기" }))));
+      el("div", { class: "card-hit" },
+        el("a", { class: "card-link", href: watch, target: "_blank", rel: "noopener", "aria-label": (v.title || "영상") + " 영상 보기" }),
+        el("div", { class: "card-media" },
+          el("img", { src: G.thumb(v.id), alt: "", loading: "lazy", decoding: "async" }),
+          el("span", { class: "yt-play", "aria-hidden": "true" })),
+        el("div", { class: "card-body" },
+          el("p", { class: "meta" }, [cat, G.fmtDate(v.published)].filter(Boolean).join(" · ")),
+          el("h3", { text: v.title || "매물 영상" }))),
+      el("p", { class: "card-actions" },
+        el("a", { class: "btn gold", href: watch, target: "_blank", rel: "noopener", text: "영상 보기" }),
+        el("a", { class: "btn navy card-call", href: tel, text: "전화하기" })));
   }
 
   let lastCount = -1;

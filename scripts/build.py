@@ -855,13 +855,15 @@ def static_video_card(v):
     watch = f"https://www.youtube.com/watch?v={quote(vid)}"
     thumb = f"https://i.ytimg.com/vi/{quote(vid)}/hqdefault.jpg"
     return (f'<article class="card video-listing" id="v{escape(vid)}">'
+            f'<div class="card-hit">'
             f'<a class="card-link" href="{watch}" target="_blank" rel="noopener" aria-label="{escape(title)} 영상 보기"></a>'
             f'<div class="card-media"><img src="{thumb}" alt="" loading="lazy" decoding="async">'
             f'<span class="yt-play" aria-hidden="true"></span></div>'
             f'<div class="card-body"><p class="meta">{escape(meta)}</p>'
-            f'<h3>{escape(title)}</h3>'
-            f'<p class="card-actions"><a class="btn gold" href="{watch}" target="_blank" rel="noopener">영상 보기</a></p>'
-            f"</div></article>")
+            f'<h3>{escape(title)}</h3></div></div>'
+            f'<p class="card-actions"><a class="btn gold" href="{watch}" target="_blank" rel="noopener">영상 보기</a>'
+            f'<a class="btn navy card-call" href="tel:01034060071">전화하기</a></p>'
+            f"</article>")
 
 
 def static_video_cards(videos):

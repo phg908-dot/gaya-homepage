@@ -4,6 +4,7 @@
 """
 import importlib.util
 import json
+import re
 import shutil
 import struct
 import subprocess
@@ -156,6 +157,13 @@ class Normalize(unittest.TestCase):
         for title, desc, want in cases:
             got = build.video_category({"title": title, "description": desc})
             self.assertEqual(got, want, title)
+
+    def test_video_card_phone_is_not_inside_watch_link(self):
+        html = build.static_video_card({"id": "abcdefghijk", "title": "지평면 토지 330㎡", "published": "2026-10-02"})
+        self.assertIn('class="btn navy card-call" href="tel:01034060071">전화하기', html)
+        overlay = re.search(r'<a class="card-link".*?</a>', html, re.S).group(0)
+        self.assertNotIn("tel:", overlay)
+        self.assertLess(html.index("</h3></div></div><p class=\"card-actions\">"), html.index("tel:01034060071"))
 
     def test_jsonld_cannot_break_out_of_script(self):
         out = build.ld_json({"name": "<!--<script></script>&"})
