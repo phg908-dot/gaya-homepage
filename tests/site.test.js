@@ -70,6 +70,7 @@ async function page(browser, opts = {}) {
     ok(await p.locator("#blog").isVisible() && await p.locator("#about").isVisible(), "블로그 소식·사무소 소개");
     ok(await p.locator("#cards[aria-live]").count() === 0, "목록 전체를 읽어주는 aria-live 없음");
     ok((await p.textContent(".contact-panel .tel-big")).trim() === "010-3406-0071", "대표번호(휴대폰) 표시");
+    ok(await p.evaluate(() => [...document.querySelectorAll('a[href^="tel:"]')].every((a) => a.getAttribute("href") === "tel:01034060071" && !a.hasAttribute("onclick") && a.parentElement.closest("a") === null)), "보이는 전화 링크는 모두 바로 걸기");
     ok(!(await p.content()).includes("031-772-2060"), "사무실 번호는 표시하지 않음");
     ok(p.errors.length === 0, "JS 오류 없음 " + p.errors.join(" | "));
 
@@ -84,6 +85,7 @@ async function page(browser, opts = {}) {
     ok(await bar.isVisible(), "하단 연락 막대");
     const barText = await bar.innerText();
     ok(barText.includes("전화하기") && barText.includes("문자하기"), "전화하기·문자하기");
+    ok((await p.locator(".mbar a").first().getAttribute("href")) === "tel:01034060071", "하단 전화하기는 바로 걸기");
     ok(await bar.evaluate((e) => e.getBoundingClientRect().height) >= 64, "하단 막대가 큼");
     ok(p.errors.length === 0, "JS 오류 없음 " + p.errors.join(" | "));
 
@@ -105,6 +107,31 @@ async function page(browser, opts = {}) {
     await p.goto(BASE);
     await p.waitForSelector("#cards .card");
     ok(await p.locator("#cards .card").count() >= 1, "매물 글이 없으면 현장 영상을 매물로 보여 줌");
+    const phone = p.locator("#cards .video-listing a").filter({ hasText: "전화하기" }).first();
+    await phone.scrollIntoViewIfNeeded();
+    const phoneCheck = await phone.evaluate((a) => {
+      const r = a.getBoundingClientRect();
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      const overlay = a.closest("article").querySelector(".card-link").getBoundingClientRect();
+      const overlaps = !(r.right <= overlay.left || overlay.right <= r.left || r.bottom <= overlay.top || overlay.bottom <= r.top);
+      return {
+        href: a.getAttribute("href"),
+        nested: a.parentElement.closest("a") !== null,
+        onclick: a.hasAttribute("onclick") || typeof a.onclick === "function",
+        hitIsSelf: hit === a || (hit && a.contains(hit)),
+        overlaps,
+      };
+    });
+    ok(phoneCheck.href === "tel:01034060071" && !phoneCheck.nested && !phoneCheck.onclick && phoneCheck.hitIsSelf && !phoneCheck.overlaps, "영상 카드 전화하기는 tel:01034060071 이고 영상 링크 밖");
+    const popup = p.waitForEvent("popup", { timeout: 800 }).catch(() => null);
+    await p.evaluate(() => {
+      document.addEventListener("click", (e) => {
+        const a = e.target.closest && e.target.closest('a[href^="tel:"]');
+        if (a) { e.preventDefault(); window.__dialed = a.getAttribute("href"); }
+      }, true);
+    });
+    await phone.click();
+    ok((await p.evaluate(() => window.__dialed)) === "tel:01034060071" && (await popup) === null && !p.url().includes("youtube"), "전화하기를 눌러도 영상이 열리지 않음");
     ok((await p.textContent("#listTitle")).includes("매물 영상"), "제목이 매물 영상");
     ok(!(await p.textContent("#listTitle")).includes("0건"), "0건을 보여 주지 않음");
     ok(!(await p.locator("body").innerText()).includes("전체 매물 0"), "빈 목록 문구 없음");
@@ -131,6 +158,7 @@ async function page(browser, opts = {}) {
     p = await page(browser);
     await p.goto(BASE + "listing/1001.html");
     await p.waitForTimeout(300);
+    ok((await p.locator(".tel-big").getAttribute("href")) === "tel:01034060071", "매물 상세 전화는 바로 걸기");
     ok((await p.title()).includes("양평 지평면"), "검색용 제목");
     ok(await p.isVisible(".keyfacts"), "핵심 정보 줄");
     ok((await p.textContent("#officeInfo")).includes("등록번호"), "사무소 명시사항");
