@@ -1,0 +1,35 @@
+# 매물 접수 → 대표 휴대폰 문자 중계 (Cloudflare Workers 무료 요금제)
+# 시제품(배포 안 됨). 배포는 GitHub Actions 작업(계획 단계 — .github/workflows/ 에 아직 없음)이 저장소 Secrets 로 수행할 예정.
+# 비밀값(SOLAPI_API_KEY, SOLAPI_API_SECRET, SMS_FROM, SMS_TO, SELFTEST_TOKEN)은 여기에 적지 않는다.
+
+name = "gaya-intake"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = true      # https://gaya-intake.<계정 하위도메인>.workers.dev
+preview_urls = false
+
+# 요청 내용이 Cloudflare 로그 저장소에 남지 않도록 Workers Logs 는 끈다 (실시간 확인은 `wrangler tail`)
+[observability]
+enabled = false
+
+[vars]
+ALLOWED_ORIGINS = "https://phg908-dot.github.io"   # 쉼표로 여러 개. localhost/127.0.0.1 은 코드에서 항상 허용
+DAILY_CAP = "20"        # 하루(한국 시간) 전체 자동 문자 최대 건수 → 최악의 경우에도 하루 약 1,000원
+IP_DAILY_LIMIT = "3"    # 같은 인터넷 주소에서 하루 최대 건수
+IP_GAP_SECONDS = "30"   # 같은 인터넷 주소에서 연속 발송 최소 간격(초)
+
+# 발송 한도 저장소: 정확한 하루 건수 계산을 위해 Durable Object(무료 요금제는 SQLite 방식만 가능)
+[[durable_objects.bindings]]
+name = "GUARD"
+class_name = "IntakeGuard"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["IntakeGuard"]
+
+# (선택) 짧은 시간 폭주 차단용 Workers Rate Limiting. 무료 요금제 제공 여부를 확인한 뒤 주석을 푼다.
+# 코드는 이 바인딩이 없어도 Durable Object 한도로 동작한다.
+# [[ratelimits]]
+# name = "RATE_LIMITER"
+# namespace_id = "1001"
+# simple = { limit = 5, period = 60 }

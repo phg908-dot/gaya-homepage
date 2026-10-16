@@ -1,0 +1,1520 @@
+{
+ "note": "PROTOTYPE 결과 일부(배포 안 됨). 전체 결과는 python3 -B tools/parser/parse_desc.py 로 다시 만든다. 여기에는 홈페이지에 게시 중인 본편 매물 영상 기록만 남김.",
+ "generated": "2026-10-16",
+ "source": "public/data/videos.json",
+ "videos_updated": "2026-10-16T04:41:01Z",
+ "counts": {
+  "all": 68,
+  "long": 30,
+  "short": 38,
+  "listing": 27,
+  "listing_done": 1,
+  "info": 40,
+  "shown": 5
+ },
+ "coverage": {
+  "no": {
+   "shown": 2,
+   "long_listing_live": 11,
+   "short_listing": 2,
+   "long_live_from_marker": 11
+  },
+  "region": {
+   "shown": 5,
+   "long_listing_live": 15,
+   "short_listing": 11,
+   "long_live_from_marker": 15
+  },
+  "region.ri": {
+   "shown": 5,
+   "long_listing_live": 13,
+   "short_listing": 6,
+   "long_live_from_marker": 13
+  },
+  "type": {
+   "shown": 5,
+   "long_listing_live": 16,
+   "short_listing": 11,
+   "long_live_from_marker": 4
+  },
+  "type.explicit": {
+   "shown": 4,
+   "long_listing_live": 4,
+   "short_listing": 1,
+   "long_live_from_marker": 4
+  },
+  "jimok": {
+   "shown": 4,
+   "long_listing_live": 5,
+   "short_listing": 7,
+   "long_live_from_marker": 4
+  },
+  "jimok.legal": {
+   "shown": 2,
+   "long_listing_live": 2,
+   "short_listing": 5,
+   "long_live_from_marker": 2
+  },
+  "deal": {
+   "shown": 5,
+   "long_listing_live": 16,
+   "short_listing": 10,
+   "long_live_from_marker": 2
+  },
+  "price": {
+   "shown": 5,
+   "long_listing_live": 14,
+   "short_listing": 11,
+   "long_live_from_marker": 13
+  },
+  "land_m2": {
+   "shown": 5,
+   "long_listing_live": 16,
+   "short_listing": 11,
+   "long_live_from_marker": 16
+  },
+  "bldg_m2": {
+   "shown": 2,
+   "long_listing_live": 5,
+   "short_listing": 0,
+   "long_live_from_marker": 5
+  },
+  "floors": {
+   "shown": 2,
+   "long_listing_live": 5,
+   "short_listing": 0,
+   "long_live_from_marker": 4
+  },
+  "rooms": {
+   "shown": 2,
+   "long_listing_live": 3,
+   "short_listing": 0,
+   "long_live_from_marker": 3
+  },
+  "baths": {
+   "shown": 2,
+   "long_listing_live": 3,
+   "short_listing": 0,
+   "long_live_from_marker": 3
+  },
+  "direction": {
+   "shown": 5,
+   "long_listing_live": 16,
+   "short_listing": 4,
+   "long_live_from_marker": 16
+  },
+  "direction.basis": {
+   "shown": 1,
+   "long_listing_live": 1,
+   "short_listing": 0,
+   "long_live_from_marker": 1
+  },
+  "parking": {
+   "shown": 1,
+   "long_listing_live": 1,
+   "short_listing": 0,
+   "long_live_from_marker": 1
+  },
+  "built": {
+   "shown": 0,
+   "long_listing_live": 3,
+   "short_listing": 0,
+   "long_live_from_marker": 3
+  },
+  "move_in": {
+   "shown": 0,
+   "long_listing_live": 0,
+   "short_listing": 0,
+   "long_live_from_marker": 0
+  },
+  "maintenance": {
+   "shown": 0,
+   "long_listing_live": 0,
+   "short_listing": 0,
+   "long_live_from_marker": 0
+  },
+  "zoning": {
+   "shown": 4,
+   "long_listing_live": 14,
+   "short_listing": 4,
+   "long_live_from_marker": 14
+  },
+  "road": {
+   "shown": 3,
+   "long_listing_live": 3,
+   "short_listing": 2,
+   "long_live_from_marker": 3
+  },
+  "infra": {
+   "shown": 3,
+   "long_listing_live": 7,
+   "short_listing": 2,
+   "long_live_from_marker": 5
+  },
+  "bcr": {
+   "shown": 2,
+   "long_listing_live": 3,
+   "short_listing": 1,
+   "long_live_from_marker": 3
+  },
+  "split": {
+   "shown": 2,
+   "long_listing_live": 4,
+   "short_listing": 2,
+   "long_live_from_marker": 3
+  },
+  "blog": {
+   "shown": 5,
+   "long_listing_live": 5,
+   "short_listing": 1,
+   "long_live_from_marker": 0
+  },
+  "blog.post_url_intact": {
+   "shown": 0,
+   "long_listing_live": 0,
+   "short_listing": 0,
+   "long_live_from_marker": 0
+  },
+  "summary": {
+   "shown": 5,
+   "long_listing_live": 16,
+   "short_listing": 11,
+   "long_live_from_marker": 0
+  },
+  "office.name": {
+   "shown": 5,
+   "long_listing_live": 16,
+   "short_listing": 11,
+   "long_live_from_marker": 0
+  },
+  "office.address": {
+   "shown": 5,
+   "long_listing_live": 5,
+   "short_listing": 11,
+   "long_live_from_marker": 0
+  },
+  "office.tel": {
+   "shown": 5,
+   "long_listing_live": 16,
+   "short_listing": 11,
+   "long_live_from_marker": 0
+  },
+  "office.regNo_raw": {
+   "shown": 5,
+   "long_listing_live": 7,
+   "short_listing": 11,
+   "long_live_from_marker": 0
+  },
+  "office.ceo": {
+   "shown": 5,
+   "long_listing_live": 5,
+   "short_listing": 11,
+   "long_live_from_marker": 0
+  },
+  "_n": {
+   "shown": 5,
+   "long_listing_live": 16,
+   "short_listing": 11
+  }
+ },
+ "groups": [
+  {
+   "members": [
+    "7PRVk7skdtc",
+    "Zs7DcqQ3cs8",
+    "tbGl9QVcqr4"
+   ],
+   "kinds": [
+    "listing"
+   ],
+   "edges": [
+    {
+     "a": "tbGl9QVcqr4",
+     "b": "7PRVk7skdtc",
+     "why": "chip-ref"
+    },
+    {
+     "a": "Zs7DcqQ3cs8",
+     "b": "7PRVk7skdtc",
+     "why": "chip-ref"
+    },
+    {
+     "a": "tbGl9QVcqr4",
+     "b": "Zs7DcqQ3cs8",
+     "why": "same-no:금768"
+    },
+    {
+     "a": "tbGl9QVcqr4",
+     "b": "7PRVk7skdtc",
+     "why": "same-no:금768"
+    },
+    {
+     "a": "Zs7DcqQ3cs8",
+     "b": "7PRVk7skdtc",
+     "why": "same-no:금768"
+    },
+    {
+     "a": "tbGl9QVcqr4",
+     "b": "Zs7DcqQ3cs8",
+     "why": "same-area+price"
+    },
+    {
+     "a": "tbGl9QVcqr4",
+     "b": "7PRVk7skdtc",
+     "why": "same-area+price"
+    },
+    {
+     "a": "Zs7DcqQ3cs8",
+     "b": "7PRVk7skdtc",
+     "why": "same-area+price"
+    }
+   ],
+   "main": "7PRVk7skdtc",
+   "enrich_main_from_others": {},
+   "conflicts_with_main": {}
+  },
+  {
+   "members": [
+    "o-T7GVoAklU",
+    "M0OzP94ml5g",
+    "YcfrgLTbNaE",
+    "tiX_r-IKFQ4"
+   ],
+   "kinds": [
+    "info"
+   ],
+   "edges": [
+    {
+     "a": "tiX_r-IKFQ4",
+     "b": "o-T7GVoAklU",
+     "why": "chip-ref"
+    },
+    {
+     "a": "M0OzP94ml5g",
+     "b": "o-T7GVoAklU",
+     "why": "chip-ref"
+    },
+    {
+     "a": "YcfrgLTbNaE",
+     "b": "o-T7GVoAklU",
+     "why": "chip-ref"
+    }
+   ]
+  },
+  {
+   "members": [
+    "UkYpv8uK-1E",
+    "AU8cAy4DxpA"
+   ],
+   "kinds": [
+    "info"
+   ],
+   "edges": [
+    {
+     "a": "UkYpv8uK-1E",
+     "b": "AU8cAy4DxpA",
+     "why": "chip-ref"
+    }
+   ]
+  },
+  {
+   "members": [
+    "zU9iFceUOJc",
+    "6JeTa44v370",
+    "6Eb6eZK_d9g",
+    "0gjCiZ7rrRE",
+    "6noMRA8Ji1E",
+    "1Mu3n_2tsfk",
+    "-O0MjGLr73I"
+   ],
+   "kinds": [
+    "info"
+   ],
+   "edges": [
+    {
+     "a": "-O0MjGLr73I",
+     "b": "6noMRA8Ji1E",
+     "why": "chip-ref"
+    },
+    {
+     "a": "1Mu3n_2tsfk",
+     "b": "6noMRA8Ji1E",
+     "why": "chip-ref"
+    },
+    {
+     "a": "6noMRA8Ji1E",
+     "b": "6JeTa44v370",
+     "why": "chip-ref"
+    },
+    {
+     "a": "0gjCiZ7rrRE",
+     "b": "6JeTa44v370",
+     "why": "chip-ref"
+    },
+    {
+     "a": "6Eb6eZK_d9g",
+     "b": "6JeTa44v370",
+     "why": "chip-ref"
+    },
+    {
+     "a": "zU9iFceUOJc",
+     "b": "6JeTa44v370",
+     "why": "chip-ref"
+    }
+   ]
+  },
+  {
+   "members": [
+    "d9zp8vq_SFk",
+    "kyCeY4lxu9k",
+    "Yp4KhcA1YDw",
+    "x7m4iamjRAA",
+    "3gvi66fRl5s",
+    "dfEYSihTfkk",
+    "eLUCOXuKBwg"
+   ],
+   "kinds": [
+    "listing"
+   ],
+   "edges": [
+    {
+     "a": "eLUCOXuKBwg",
+     "b": "3gvi66fRl5s",
+     "why": "same-area+price"
+    },
+    {
+     "a": "eLUCOXuKBwg",
+     "b": "kyCeY4lxu9k",
+     "why": "same-area+price"
+    },
+    {
+     "a": "eLUCOXuKBwg",
+     "b": "Yp4KhcA1YDw",
+     "why": "same-area+price"
+    },
+    {
+     "a": "dfEYSihTfkk",
+     "b": "x7m4iamjRAA",
+     "why": "same-area+price"
+    },
+    {
+     "a": "dfEYSihTfkk",
+     "b": "Yp4KhcA1YDw",
+     "why": "split-offer(alt price matches)"
+    },
+    {
+     "a": "dfEYSihTfkk",
+     "b": "d9zp8vq_SFk",
+     "why": "same-area+price"
+    },
+    {
+     "a": "3gvi66fRl5s",
+     "b": "kyCeY4lxu9k",
+     "why": "same-area+price"
+    },
+    {
+     "a": "3gvi66fRl5s",
+     "b": "Yp4KhcA1YDw",
+     "why": "same-area+price"
+    },
+    {
+     "a": "x7m4iamjRAA",
+     "b": "Yp4KhcA1YDw",
+     "why": "split-offer(alt price matches)"
+    },
+    {
+     "a": "x7m4iamjRAA",
+     "b": "d9zp8vq_SFk",
+     "why": "same-area+price"
+    },
+    {
+     "a": "kyCeY4lxu9k",
+     "b": "Yp4KhcA1YDw",
+     "why": "same-area+price"
+    },
+    {
+     "a": "Yp4KhcA1YDw",
+     "b": "d9zp8vq_SFk",
+     "why": "split-offer(alt price matches)"
+    }
+   ],
+   "main": "d9zp8vq_SFk",
+   "enrich_main_from_others": {},
+   "conflicts_with_main": {
+    "price": [
+     {
+      "from": "kyCeY4lxu9k",
+      "main": 23000,
+      "other": 12000
+     },
+     {
+      "from": "Yp4KhcA1YDw",
+      "main": 23000,
+      "other": 12000
+     },
+     {
+      "from": "3gvi66fRl5s",
+      "main": 23000,
+      "other": 12000
+     },
+     {
+      "from": "eLUCOXuKBwg",
+      "main": 23000,
+      "other": 12000
+     }
+    ],
+    "land_m2": [
+     {
+      "from": "kyCeY4lxu9k",
+      "main": 660,
+      "other": 330
+     },
+     {
+      "from": "Yp4KhcA1YDw",
+      "main": 660,
+      "other": 330
+     },
+     {
+      "from": "3gvi66fRl5s",
+      "main": 660,
+      "other": 330
+     },
+     {
+      "from": "eLUCOXuKBwg",
+      "main": 660,
+      "other": 330
+     }
+    ]
+   }
+  },
+  {
+   "members": [
+    "QvpWYZe_eJo",
+    "ozGe4S8idIc",
+    "4bla3QqFByw"
+   ],
+   "kinds": [
+    "info"
+   ],
+   "edges": [
+    {
+     "a": "4bla3QqFByw",
+     "b": "ozGe4S8idIc",
+     "why": "chip-ref"
+    },
+    {
+     "a": "QvpWYZe_eJo",
+     "b": "ozGe4S8idIc",
+     "why": "chip-ref"
+    }
+   ]
+  },
+  {
+   "members": [
+    "r__FgLu9thc",
+    "7eBrdRb0JaE",
+    "wZenIloye2I"
+   ],
+   "kinds": [
+    "info"
+   ],
+   "edges": [
+    {
+     "a": "r__FgLu9thc",
+     "b": "wZenIloye2I",
+     "why": "chip-ref"
+    },
+    {
+     "a": "7eBrdRb0JaE",
+     "b": "wZenIloye2I",
+     "why": "chip-ref"
+    }
+   ]
+  },
+  {
+   "members": [
+    "9MNwvL3a-gQ",
+    "1qgq3yrmxIw",
+    "eVYfvV5CNnk",
+    "WcNb75j-12w"
+   ],
+   "kinds": [
+    "info"
+   ],
+   "edges": [
+    {
+     "a": "WcNb75j-12w",
+     "b": "1qgq3yrmxIw",
+     "why": "chip-ref"
+    },
+    {
+     "a": "eVYfvV5CNnk",
+     "b": "1qgq3yrmxIw",
+     "why": "chip-ref"
+    },
+    {
+     "a": "9MNwvL3a-gQ",
+     "b": "1qgq3yrmxIw",
+     "why": "chip-ref"
+    }
+   ]
+  },
+  {
+   "members": [
+    "5eZy_-NLN2s",
+    "ni51AU-qD80",
+    "lzWwT5OabyM",
+    "uBXNvOaF_eY"
+   ],
+   "kinds": [
+    "info"
+   ],
+   "edges": [
+    {
+     "a": "uBXNvOaF_eY",
+     "b": "ni51AU-qD80",
+     "why": "chip-ref"
+    },
+    {
+     "a": "lzWwT5OabyM",
+     "b": "ni51AU-qD80",
+     "why": "chip-ref"
+    },
+    {
+     "a": "5eZy_-NLN2s",
+     "b": "ni51AU-qD80",
+     "why": "chip-ref"
+    }
+   ]
+  },
+  {
+   "members": [
+    "dXTYa7OVPyg",
+    "UrU2fbFdZr8",
+    "oPPbdiZHhb0",
+    "qdatVwn8LUw"
+   ],
+   "kinds": [
+    "info"
+   ],
+   "edges": [
+    {
+     "a": "qdatVwn8LUw",
+     "b": "UrU2fbFdZr8",
+     "why": "chip-ref"
+    },
+    {
+     "a": "oPPbdiZHhb0",
+     "b": "UrU2fbFdZr8",
+     "why": "chip-ref"
+    },
+    {
+     "a": "dXTYa7OVPyg",
+     "b": "UrU2fbFdZr8",
+     "why": "chip-ref"
+    }
+   ]
+  },
+  {
+   "members": [
+    "RJZWHb454QE",
+    "dCSvuO2Rxcw",
+    "T1bnKBqf4J4",
+    "vXD56VyEY8M",
+    "cVZRUtSTDbA",
+    "If4LCkF7IaM"
+   ],
+   "kinds": [
+    "listing"
+   ],
+   "edges": [
+    {
+     "a": "If4LCkF7IaM",
+     "b": "cVZRUtSTDbA",
+     "why": "same-area+price"
+    },
+    {
+     "a": "If4LCkF7IaM",
+     "b": "vXD56VyEY8M",
+     "why": "same-area+price"
+    },
+    {
+     "a": "If4LCkF7IaM",
+     "b": "T1bnKBqf4J4",
+     "why": "same-area+price"
+    },
+    {
+     "a": "If4LCkF7IaM",
+     "b": "dCSvuO2Rxcw",
+     "why": "same-area+price"
+    },
+    {
+     "a": "If4LCkF7IaM",
+     "b": "RJZWHb454QE",
+     "why": "same-ri+area, price 34000(2022)→23000(2026) (re-listed?)"
+    },
+    {
+     "a": "cVZRUtSTDbA",
+     "b": "vXD56VyEY8M",
+     "why": "same-area+price"
+    },
+    {
+     "a": "cVZRUtSTDbA",
+     "b": "T1bnKBqf4J4",
+     "why": "same-area+price"
+    },
+    {
+     "a": "cVZRUtSTDbA",
+     "b": "dCSvuO2Rxcw",
+     "why": "same-area+price"
+    },
+    {
+     "a": "cVZRUtSTDbA",
+     "b": "RJZWHb454QE",
+     "why": "same-ri+area, price 34000(2022)→23000(2026) (re-listed?)"
+    },
+    {
+     "a": "vXD56VyEY8M",
+     "b": "T1bnKBqf4J4",
+     "why": "same-area+price"
+    },
+    {
+     "a": "vXD56VyEY8M",
+     "b": "dCSvuO2Rxcw",
+     "why": "same-area+price"
+    },
+    {
+     "a": "vXD56VyEY8M",
+     "b": "RJZWHb454QE",
+     "why": "same-ri+area, price 34000(2022)→23000(2026) (re-listed?)"
+    },
+    {
+     "a": "T1bnKBqf4J4",
+     "b": "dCSvuO2Rxcw",
+     "why": "same-area+price"
+    },
+    {
+     "a": "T1bnKBqf4J4",
+     "b": "RJZWHb454QE",
+     "why": "same-ri+area, price 34000(2022)→23000(2026) (re-listed?)"
+    },
+    {
+     "a": "dCSvuO2Rxcw",
+     "b": "RJZWHb454QE",
+     "why": "same-ri+area, price 34000(2022)→23000(2026) (re-listed?)"
+    }
+   ],
+   "main": "T1bnKBqf4J4",
+   "enrich_main_from_others": {
+    "no": [
+     {
+      "from": "RJZWHb454QE",
+      "value": {
+       "raw": "1450",
+       "prefix": null,
+       "num": 1450
+      }
+     }
+    ]
+   },
+   "conflicts_with_main": {
+    "price": [
+     {
+      "from": "RJZWHb454QE",
+      "main": 23000,
+      "other": 34000
+     }
+    ]
+   }
+  }
+ ],
+ "records": [
+  {
+   "id": "7PRVk7skdtc",
+   "title": "전기 많이 써도 월 약 5천 원? 양평 용문 전원주택 2,538㎡(768평)｜가야공인중개사 박홍균",
+   "isShort": false,
+   "published": "2026-10-12",
+   "kind": "listing",
+   "build_is_listing": true,
+   "age_ok_12m": true,
+   "shown_on_site": true,
+   "fields": {
+    "no": {
+     "raw": "금768",
+     "prefix": "금",
+     "num": 768
+    },
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "용문면",
+     "ri": "금곡리"
+    },
+    "deal": "매매",
+    "bldg_raw": "일반 건축물, 연면적 111.57㎡(34평)",
+    "house_hint": true,
+    "bldg_m2": 111.57,
+    "rooms": 3,
+    "baths": 1,
+    "composition": "거실, 주방, 다용도실, 2층 창고",
+    "land_raw": "2,538㎡(768평), 세 필지",
+    "land_m2": 2538,
+    "land_py": 768,
+    "jimok_parts": [
+     {
+      "jimok": "대",
+      "m2": 660,
+      "label": "대지"
+     },
+     {
+      "jimok": "농지(전·답 미상)",
+      "m2": 1878,
+      "label": "농지"
+     }
+    ],
+    "direction": {
+     "value": "남향",
+     "raw": "정남향"
+    },
+    "access": [
+     "서울에서 용문사 가는 IC에서 차로 7분"
+    ],
+    "road": {
+     "raw": "폭 6미터, 차가 많이 다니지 않는 도로가 두 면에 접함",
+     "width_m": 6
+    },
+    "terrain": "평지, 눈이 와도 안전하게 다닐 수 있음",
+    "solar": "2기 설치, 한 달 전기요금 약 5천 원",
+    "heating": "1층 방과 거실 LPG 가스보일러(아주 추운 겨울에만 잠깐), 2층 전기판넬",
+    "hotwater": "전기",
+    "infra": {
+     "raw": "마시는 물은 상수도, 농사용 지하수 따로",
+     "items": [
+      "상수도",
+      "지하수"
+     ]
+    },
+    "includes": "컨테이너 2동, 비닐하우스, 정자",
+    "zoning": {
+     "raw": "농업진흥지역",
+     "legal": [],
+     "other": [
+      "농업진흥지역"
+     ]
+    },
+    "price_raw": "4억 9,500만 원",
+    "price": 49500,
+    "type": "전원주택",
+    "type_detail": "전원주택",
+    "jimok": "농지(전·답 미상)+대",
+    "floors": 2,
+    "blog": {
+     "url": "https://blog.naver.com/gayayangpyeong",
+     "truncated": false,
+     "kind": "blog-home"
+    },
+    "summary": "양평 전원주택 매물, 경기도 양평군 용문면 금곡리 정남향 주택입니다",
+    "office": {
+     "name": "가야공인중개사",
+     "name_forms": [
+      "가야공인중개사",
+      "가야공인중개사사무소"
+     ],
+     "address": "경기도 양평군 지평면 지평의병로 32",
+     "tel": "010-3406-0071",
+     "regNo_raw": "가-3644-198",
+     "regNo_label": "중개사무소등록번호",
+     "ceo": "박홍균"
+    },
+    "hashtags": [
+     "#양평전원주택",
+     "#양평주택매매",
+     "#용문면전원주택",
+     "#전원주택매매",
+     "#태양광주택",
+     "#텃밭있는집",
+     "#정남향주택",
+     "#양평부동산",
+     "#가야공인중개사"
+    ]
+   },
+   "src": {
+    "no": "marker",
+    "region": "marker",
+    "deal": "marker",
+    "bldg_raw": "marker",
+    "house_hint": "marker",
+    "bldg_m2": "marker",
+    "rooms": "marker",
+    "baths": "marker",
+    "composition": "marker",
+    "land_raw": "marker",
+    "land_m2": "marker",
+    "land_py": "marker",
+    "jimok_parts": "marker",
+    "direction": "marker",
+    "access": "marker",
+    "road": "marker",
+    "terrain": "marker",
+    "solar": "marker",
+    "heating": "marker",
+    "hotwater": "marker",
+    "infra": "marker",
+    "includes": "marker",
+    "zoning": "marker",
+    "price_raw": "marker",
+    "price": "marker",
+    "type": "title/text",
+    "type_detail": "title/text",
+    "jimok": "marker(parts)",
+    "floors": "inferred(마커 줄의 'N층' 언급)",
+    "blog": "text",
+    "summary": "text"
+   },
+   "flags": [
+    "floors_inferred_from_mentions"
+   ],
+   "disclosure": {
+    "listing_missing": [
+     "건축물 사용승인일(사용검사일·준공인가일)",
+     "건축물 주차대수",
+     "건축물 입주가능일",
+     "건축물 관리비"
+    ],
+    "office_missing": [],
+    "notes": [
+     "명칭 표기 '가야공인중개사' — site.json 명칭(가야공인중개사사무소)과 다름(등록증 명칭 확인 필요)"
+    ]
+   },
+   "as_listing_draft": {
+    "no": 768,
+    "status": "거래중",
+    "title": "전기 많이 써도 월 약 5천 원? 양평 용문 전원주택 2,538㎡(768평)｜가야공인중개사 박홍균",
+    "type": "전원주택",
+    "deal": "매매",
+    "price": 49500,
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "용문면",
+     "ri": "금곡리"
+    },
+    "land": {
+     "area": 2538,
+     "jimok_unverified": "농지(전·답 미상)+대",
+     "road": "폭 6미터, 차가 많이 다니지 않는 도로가 두 면에 접함"
+    },
+    "building": {
+     "use": "단독주택",
+     "area": 111.57,
+     "totalFloors": 2,
+     "approvalDate": null,
+     "direction": "남향",
+     "rooms": 3,
+     "baths": 1,
+     "parking": null,
+     "moveIn": null,
+     "maintenance": null
+    },
+    "summary": "양평 전원주택 매물, 경기도 양평군 용문면 금곡리 정남향 주택입니다",
+    "videoIds": [
+     "7PRVk7skdtc"
+    ]
+   }
+  },
+  {
+   "id": "Yp4KhcA1YDw",
+   "title": "지평 시내 대지 1억2천! 양평군 지평면 토지 330㎡(100평) 지평역 걸어서 450m/전용비 없음 #양평토지 #지평면토지 #양평전원주택",
+   "isShort": false,
+   "published": "2026-10-02",
+   "kind": "listing",
+   "build_is_listing": true,
+   "age_ok_12m": true,
+   "shown_on_site": true,
+   "fields": {
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "지평면",
+     "ri": "지평리",
+     "note": "지평 시내"
+    },
+    "type_raw": "토지, 지목 대지 (전체 660㎡(200평)를 절반으로 나눈 뒤쪽)",
+    "land_raw": "330㎡(100평), 도로 지분 포함",
+    "land_m2": 330,
+    "land_py": 100,
+    "road_share_included": true,
+    "price_raw": "1억 2,000만 원 (전체로 사시면 660㎡(200평) 2억 3,000만 원)",
+    "price": 12000,
+    "price_alt": [
+     {
+      "price": 23000,
+      "label": "전체로 사시면 660㎡(200평) 2억 3,000만 원",
+      "area_m2": 660
+     }
+    ],
+    "zoning": {
+     "raw": "도시지역, 제1종 주거지역",
+     "legal": [],
+     "other": [
+      "제1종(일반/전용 미상)주거지역",
+      "도시지역"
+     ]
+    },
+    "bcr": 60,
+    "far": 200,
+    "road": {
+     "raw": "폭 6m 포장, 뒤쪽 땅 바로 앞까지",
+     "width_m": 6,
+     "paved": true
+    },
+    "direction": {
+     "value": "남향",
+     "raw": "남향"
+    },
+    "infra": {
+     "raw": "상수도, 하수도 관로 연결",
+     "items": [
+      "상수도",
+      "하수도",
+      "관로"
+     ]
+    },
+    "access": [
+     "지평역 걸어서 450m. 학교, 병원, 하나로마트, 면사무소 걸어서 500m 안쪽"
+    ],
+    "type": "토지",
+    "type_detail": "토지",
+    "jimok": "대",
+    "deal": "매매",
+    "split": "대지 (전체 660㎡(200평)를 절반으로 나눈 뒤쪽)",
+    "blog": {
+     "url": "https://blog.naver.com/gayayangpyeong",
+     "truncated": true,
+     "kind": "post?"
+    },
+    "summary": "양평토지 매물, 양평군 지평면 지평리 시내 토지(지목 대지) 330㎡(100평)을 1억 2천만 원에 사실 수 있습니다",
+    "office": {
+     "name": "가야공인중개사",
+     "name_forms": [
+      "가야공인중개사"
+     ],
+     "address": "경기도 양평군 지평면 지평의병로 32",
+     "tel": "010-3406-0071",
+     "regNo_raw": "가-3644-198",
+     "regNo_label": "등록번호",
+     "ceo": "박홍균"
+    },
+    "hashtags": [
+     "#양평토지",
+     "#지평면토지",
+     "#양평전원주택",
+     "#지평역전원주택",
+     "#양평땅",
+     "#1억대토지",
+     "#양평소액토지",
+     "#분할매매",
+     "#양평부동산",
+     "#가야공인중개사"
+    ]
+   },
+   "src": {
+    "region": "marker",
+    "type_raw": "marker",
+    "land_raw": "marker",
+    "land_m2": "marker",
+    "land_py": "marker",
+    "road_share_included": "marker",
+    "price_raw": "marker",
+    "price": "marker",
+    "price_alt": "marker",
+    "zoning": "marker",
+    "bcr": "marker",
+    "far": "marker",
+    "road": "marker",
+    "direction": "marker",
+    "infra": "marker",
+    "access": "marker",
+    "type": "marker",
+    "type_detail": "marker",
+    "jimok": "marker",
+    "deal": "text",
+    "split": "text",
+    "blog": "text",
+    "summary": "text"
+   },
+   "flags": [],
+   "disclosure": {
+    "listing_missing": [],
+    "office_missing": [],
+    "notes": [
+     "명칭 표기 '가야공인중개사' — site.json 명칭(가야공인중개사사무소)과 다름(등록증 명칭 확인 필요)"
+    ]
+   },
+   "as_listing_draft": {
+    "no": 0,
+    "status": "거래중",
+    "title": "지평 시내 대지 1억2천! 양평군 지평면 토지 330㎡(100평) 지평역 걸어서 450m/전용비 없음 #양평",
+    "type": "토지",
+    "deal": "매매",
+    "price": 12000,
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "지평면",
+     "ri": "지평리"
+    },
+    "land": {
+     "area": 330,
+     "jimok": "대",
+     "road": "폭 6m 포장, 뒤쪽 땅 바로 앞까지"
+    },
+    "building": null,
+    "summary": "양평토지 매물, 양평군 지평면 지평리 시내 토지(지목 대지) 330㎡(100평)을 1억 2천만 원에 사실 수 있습니다",
+    "videoIds": [
+     "Yp4KhcA1YDw"
+    ]
+   }
+  },
+  {
+   "id": "d9zp8vq_SFk",
+   "title": "지평역 걸어서 450m! 양평군 지평면 토지 660㎡(200평) 2억3천/전용비 없는 대지/절반 1억2천 #양평토지 #지평면토지 #양평전원주택",
+   "isShort": false,
+   "published": "2026-09-30",
+   "kind": "listing",
+   "build_is_listing": true,
+   "age_ok_12m": true,
+   "shown_on_site": true,
+   "fields": {
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "지평면",
+     "ri": "지평리",
+     "note": "지평 시내"
+    },
+    "type_raw": "토지, 지목 대지",
+    "land_raw": "660㎡(200평), 도로 지분 99㎡(30평) 포함",
+    "land_m2": 660,
+    "land_py": 200,
+    "road_share_m2": 99,
+    "road_share_included": true,
+    "jimok_parts": [
+     {
+      "jimok": "대",
+      "m2": 561,
+      "label": "대지로 쓰는 면적"
+     }
+    ],
+    "price_raw": "2억 3,000만 원",
+    "price": 23000,
+    "split": "절반 분할 가능, 뒤쪽 절반부터 매매. 뒤쪽 절반 330㎡(100평), 도로 지분 포함 1억 2,000만 원",
+    "zoning": {
+     "raw": "도시지역, 제1종 주거지역",
+     "legal": [],
+     "other": [
+      "제1종(일반/전용 미상)주거지역",
+      "도시지역"
+     ]
+    },
+    "bcr": 60,
+    "far": 200,
+    "road": {
+     "raw": "폭 6m, 포장",
+     "width_m": 6,
+     "paved": true
+    },
+    "direction": {
+     "value": "남향",
+     "raw": "남향"
+    },
+    "infra": {
+     "raw": "상수도, 하수도 관로 연결, 도시가스 확정",
+     "items": [
+      "상수도",
+      "하수도",
+      "도시가스",
+      "관로"
+     ]
+    },
+    "access": [
+     "지평역 걸어서 450m. 학교, 병원, 하나로마트, 면사무소 걸어서 500m 안쪽"
+    ],
+    "type": "토지",
+    "type_detail": "토지",
+    "jimok": "대",
+    "deal": "매매",
+    "blog": {
+     "url": "https://blog.naver.com/gayayangpyeong",
+     "truncated": true,
+     "kind": "post?"
+    },
+    "summary": "양평토지 매물, 양평군 지평면 지평리 시내 토지(지목 대지) 660㎡(200평) 2억 3천만 원입니다",
+    "office": {
+     "name": "가야공인중개사",
+     "name_forms": [
+      "가야공인중개사"
+     ],
+     "address": "경기도 양평군 지평면 지평의병로 32",
+     "tel": "010-3406-0071",
+     "regNo_raw": "가-3644-198",
+     "regNo_label": "등록번호",
+     "ceo": "박홍균"
+    },
+    "hashtags": [
+     "#양평토지",
+     "#지평면토지",
+     "#양평전원주택",
+     "#지평역전원주택",
+     "#양평땅",
+     "#전원주택매매",
+     "#지평면토지매매",
+     "#분할매매",
+     "#양평부동산",
+     "#가야공인중개사"
+    ]
+   },
+   "src": {
+    "region": "marker",
+    "type_raw": "marker",
+    "land_raw": "marker",
+    "land_m2": "marker",
+    "land_py": "marker",
+    "road_share_m2": "marker",
+    "road_share_included": "marker",
+    "jimok_parts": "marker",
+    "price_raw": "marker",
+    "price": "marker",
+    "split": "marker",
+    "zoning": "marker",
+    "bcr": "marker",
+    "far": "marker",
+    "road": "marker",
+    "direction": "marker",
+    "infra": "marker",
+    "access": "marker",
+    "type": "marker",
+    "type_detail": "marker",
+    "jimok": "marker",
+    "deal": "text",
+    "blog": "text",
+    "summary": "text"
+   },
+   "flags": [],
+   "disclosure": {
+    "listing_missing": [],
+    "office_missing": [],
+    "notes": [
+     "명칭 표기 '가야공인중개사' — site.json 명칭(가야공인중개사사무소)과 다름(등록증 명칭 확인 필요)"
+    ]
+   },
+   "as_listing_draft": {
+    "no": 0,
+    "status": "거래중",
+    "title": "지평역 걸어서 450m! 양평군 지평면 토지 660㎡(200평) 2억3천/전용비 없는 대지/절반 1억2천 #",
+    "type": "토지",
+    "deal": "매매",
+    "price": 23000,
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "지평면",
+     "ri": "지평리"
+    },
+    "land": {
+     "area": 660,
+     "jimok": "대",
+     "road": "폭 6m, 포장"
+    },
+    "building": null,
+    "summary": "양평토지 매물, 양평군 지평면 지평리 시내 토지(지목 대지) 660㎡(200평) 2억 3천만 원입니다",
+    "videoIds": [
+     "d9zp8vq_SFk"
+    ]
+   }
+  },
+  {
+   "id": "T1bnKBqf4J4",
+   "title": "분당.강남.송파 1시간! 개울 옆 양평 지평 전원주택지 1,855㎡(562평) 2억3천/하천점용 3,723㎡(566평) 함께 사용 #양평토지 #농촌체류형쉼터",
+   "isShort": false,
+   "published": "2026-09-17",
+   "kind": "listing",
+   "build_is_listing": true,
+   "age_ok_12m": true,
+   "shown_on_site": true,
+   "fields": {
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "지평면",
+     "ri": "일신리",
+     "village": "금동마을"
+    },
+    "type_raw": "농지 (계단식 4개 단 정리, 농지전용허가 전)",
+    "land_raw": "1,855㎡ (562평)",
+    "land_m2": 1855,
+    "land_py": 562,
+    "river_m2": 1868,
+    "river_note": "1,868㎡ (565평), 하천점용허가",
+    "price_raw": "2억 3,000만 원 (1,855㎡ 기준, ㎡당 약 12만 4천 원 / 평당 약 41만 원)",
+    "price_per_py": 41,
+    "price": 23000,
+    "zoning": {
+     "raw": "계획관리지역",
+     "legal": [
+      "계획관리지역"
+     ],
+     "other": []
+    },
+    "direction": {
+     "value": "남동향",
+     "raw": "동남향"
+    },
+    "access": [
+     "제2영동고속도로 동여주IC 차량 약 7분"
+    ],
+    "type": "토지",
+    "type_detail": "농지",
+    "jimok": "농지(전·답·과수원 미상)",
+    "deal": "매매",
+    "blog": {
+     "url": "https://blog.naver.com/gayayangpyeong",
+     "truncated": true,
+     "kind": "post?"
+    },
+    "summary": "개울이 바로 옆으로 흐르고 뒤는 도로 없는 자연림 야산인 양평 지평면 일신리 금동마을 농지입니다.",
+    "office": {
+     "name": "가야공인중개사",
+     "name_forms": [
+      "가야공인중개사"
+     ],
+     "address": "경기도 양평군 지평면 지평의병로 32",
+     "tel": "010-3406-0071",
+     "regNo_raw": "가-3644-198",
+     "regNo_label": "등록번호",
+     "ceo": "박홍균"
+    },
+    "hashtags": [
+     "#양평토지",
+     "#지평면토지",
+     "#양평농지",
+     "#개울있는토지",
+     "#하천점용",
+     "#농촌체류형쉼터",
+     "#계획관리지역",
+     "#동여주IC",
+     "#세컨하우스부지",
+     "#가야공인중개사",
+     "#가야부동산",
+     "#양평가야부동산"
+    ]
+   },
+   "src": {
+    "region": "marker",
+    "type_raw": "marker",
+    "land_raw": "marker",
+    "land_m2": "marker",
+    "land_py": "marker",
+    "river_m2": "marker",
+    "river_note": "marker",
+    "price_raw": "marker",
+    "price_per_py": "marker",
+    "price": "marker",
+    "zoning": "marker",
+    "direction": "marker",
+    "access": "marker",
+    "type": "marker",
+    "type_detail": "marker",
+    "jimok": "inferred",
+    "deal": "text",
+    "blog": "text",
+    "summary": "text"
+   },
+   "flags": [
+    "title_m2_py_mismatch:3723㎡ vs 566평"
+   ],
+   "disclosure": {
+    "listing_missing": [
+     "지목"
+    ],
+    "office_missing": [],
+    "notes": [
+     "명칭 표기 '가야공인중개사' — site.json 명칭(가야공인중개사사무소)과 다름(등록증 명칭 확인 필요)"
+    ]
+   },
+   "as_listing_draft": {
+    "no": 0,
+    "status": "거래중",
+    "title": "분당.강남.송파 1시간! 개울 옆 양평 지평 전원주택지 1,855㎡(562평) 2억3천/하천점용 3,723㎡",
+    "type": "토지",
+    "deal": "매매",
+    "price": 23000,
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "지평면",
+     "ri": "일신리"
+    },
+    "land": {
+     "area": 1855,
+     "jimok_unverified": "농지(전·답·과수원 미상)",
+     "zoning": "계획관리지역"
+    },
+    "building": null,
+    "summary": "개울이 바로 옆으로 흐르고 뒤는 도로 없는 자연림 야산인 양평 지평면 일신리 금동마을 농지입니다.",
+    "videoIds": [
+     "T1bnKBqf4J4"
+    ]
+   }
+  },
+  {
+   "id": "Yi7_zs8ZgEw",
+   "title": "분당.강남.송파 1시간! 양평 전원주택 3억대 | 잔디마당 남향 2층 단독주택 | 대지228평 건평53평 | 매물번호350 / 양평전원주택매매 / 지평면전원주택 / 일신리전원주택",
+   "isShort": false,
+   "published": "2026-09-13",
+   "kind": "listing",
+   "build_is_listing": true,
+   "age_ok_12m": true,
+   "shown_on_site": true,
+   "fields": {
+    "no": {
+     "raw": "350",
+     "prefix": null,
+     "num": 350
+    },
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "지평면",
+     "ri": "일신리"
+    },
+    "type_raw": "전원주택 (지상 2층 단독주택)",
+    "deal": "매매",
+    "price_raw": "3억 5,000만원",
+    "price": 35000,
+    "land_raw": "677㎡ (205평) + 도로지분 76㎡ (23평)",
+    "land_m2": 677,
+    "land_py": 205,
+    "road_share_m2": 76,
+    "road_share_included": false,
+    "bldg_raw": "1층 125㎡ (38평), 2층 50㎡ (15평), 합계 175㎡ (53평)",
+    "bldg_m2": 175,
+    "floors": 2,
+    "rooms": 3,
+    "baths": 3,
+    "heating": "심야전기 보일러 + 화목난로",
+    "direction": {
+     "value": "남향",
+     "raw": "남향",
+     "basis": "거실창 기준"
+    },
+    "parking": 2,
+    "type": "전원주택",
+    "type_detail": "전원주택",
+    "blog": {
+     "url": "https://blog.naver.com/gayayangpyeong",
+     "truncated": false,
+     "kind": "blog-home"
+    },
+    "summary": "양평 지평면 일신리 남향 전원주택 매매 3억 5,000만원 (매물번호 350)",
+    "office": {
+     "name": "가야공인중개사",
+     "name_forms": [
+      "가야공인중개사"
+     ],
+     "address": "경기도 양평군 지평면 지평의병로 32",
+     "tel": "010-3406-0071",
+     "regNo_raw": "가-3644-198",
+     "regNo_label": "등록번호",
+     "ceo": "박홍균"
+    },
+    "hashtags": [
+     "#양평전원주택",
+     "#지평면전원주택",
+     "#일신리전원주택",
+     "#양평전원주택매매",
+     "#양평주택매매",
+     "#양평단독주택",
+     "#전원주택매매",
+     "#세컨하우스",
+     "#양평부동산",
+     "#지평부동산",
+     "#가야공인중개사",
+     "#가야부동산"
+    ]
+   },
+   "src": {
+    "no": "marker",
+    "region": "marker",
+    "type_raw": "marker",
+    "deal": "marker",
+    "price_raw": "marker",
+    "price": "marker",
+    "land_raw": "marker",
+    "land_m2": "marker",
+    "land_py": "marker",
+    "road_share_m2": "marker",
+    "road_share_included": "marker",
+    "bldg_raw": "marker",
+    "bldg_m2": "marker",
+    "floors": "marker(층별 면적)",
+    "rooms": "marker",
+    "baths": "marker",
+    "heating": "marker",
+    "direction": "marker",
+    "parking": "marker",
+    "type": "marker",
+    "type_detail": "marker",
+    "blog": "text",
+    "summary": "text"
+   },
+   "flags": [
+    "bldg_area_label:건축면적이라 적었지만 층별 합계(연면적)"
+   ],
+   "disclosure": {
+    "listing_missing": [
+     "건축물 사용승인일(사용검사일·준공인가일)",
+     "건축물 입주가능일",
+     "건축물 관리비"
+    ],
+    "office_missing": [],
+    "notes": [
+     "명칭 표기 '가야공인중개사' — site.json 명칭(가야공인중개사사무소)과 다름(등록증 명칭 확인 필요)"
+    ]
+   },
+   "as_listing_draft": {
+    "no": 350,
+    "status": "거래중",
+    "title": "분당.강남.송파 1시간! 양평 전원주택 3억대 | 잔디마당 남향 2층 단독주택 | 대지228평 건평53평 |",
+    "type": "전원주택",
+    "deal": "매매",
+    "price": 35000,
+    "region": {
+     "sido": "경기도",
+     "sigungu": "양평군",
+     "eupmyeon": "지평면",
+     "ri": "일신리"
+    },
+    "land": {
+     "area": 677
+    },
+    "building": {
+     "use": "단독주택",
+     "area": 175,
+     "totalFloors": 2,
+     "approvalDate": null,
+     "direction": "남향(거실창 기준)",
+     "rooms": 3,
+     "baths": 3,
+     "parking": 2,
+     "moveIn": null,
+     "maintenance": null
+    },
+    "summary": "양평 지평면 일신리 남향 전원주택 매매 3억 5,000만원 (매물번호 350)",
+    "videoIds": [
+     "Yi7_zs8ZgEw"
+    ]
+   }
+  }
+ ]
+}

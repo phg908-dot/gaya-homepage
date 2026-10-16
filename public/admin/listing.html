@@ -92,6 +92,7 @@
     .ed-hint { margin: 0; font-size: 13px; color: var(--muted); }
     .ed-ferr { margin: 0; font-size: 13px; color: #a12020; font-weight: 700; }
     .ed-fnote { margin: 0; font-size: 13px; color: var(--navy); font-weight: 700; }
+    .ed-fwarn { margin: 4px 0 0; padding: 6px 8px; border-radius: 8px; border: 1px solid #e0b46a; background: #fff8ec; color: #6b3f00; font-size: 13px; font-weight: 600; }
     .ed-pv { font-size: 14px; color: var(--navy); font-weight: 800; min-height: 1.3em; }
     .ed-pv-line { display: block; margin: 2px 0 12px; font-size: 14px; color: var(--navy); font-weight: 700; }
     .ed-g2, .ed-g3, .ed-g4 { display: grid; gap: 0 14px; }
@@ -140,6 +141,8 @@
     .ed-vi-body .ed-row { gap: 4px; }
     .ed-done-note { margin: 4px 0 12px; padding: 10px 12px; border-radius: 10px; background: #fff4e5; border: 1px solid #f3d19c; color: #6b3f00; font-weight: 700; font-size: 14px; }
     .ed-sample-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; padding: 10px 12px; border-radius: 10px; background: #fdecec; font-size: 14px; }
+    .ed-jibun { max-width: 420px; margin-bottom: 4px; }
+    .ed-jibun .check { margin: 6px 0 0; }
     .ed-box-note { margin: 0 0 12px; padding: 8px 10px; border-radius: 8px; background: #eef2f7; color: var(--navy-ink); font-size: 14px; font-weight: 700; }
 
     /* 점검·저장 */
@@ -159,6 +162,7 @@
     .ed-save-state.is-done { color: #14573a; }
     .ed-save-state.is-clean { color: #14573a; }
     .ed-save-state.is-bad { color: #a12020; }
+    .ed-save-state.is-wait { color: #7a4a00; }
     .ed-setup { margin-top: 8px; font-size: 13px; color: var(--muted); }
     .ed-setup summary { cursor: pointer; font-weight: 700; }
     .ed-setup code { overflow-wrap: anywhere; }
@@ -172,6 +176,8 @@
     .ed-load-error { background: #fdecec; color: #6f1414; border: 2px solid #c9363b; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; font-weight: 700; }
     .ed-load-error p { margin: 0 0 8px; }
     .ed-load-error .ed-hint { color: #6f1414; font-weight: 600; }
+    .ed-load-draft { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; background: #fff; border: 2px solid #c98a1b; color: #4a2c00; }
+    .ed-load-draft p { margin: 0 0 8px; }
 
     /* 모바일 하단 바 · 알림 */
     .ed-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 6px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: var(--navy); box-shadow: 0 -2px 10px rgb(0 0 0 / .15); }
@@ -219,6 +225,11 @@
     <!-- 홈페이지의 listings.json 을 못 불러오면: 편집·내려받기를 막고 파일 불러오기만 허용 -->
     <div class="ed-load-error" id="loadError" role="alert" hidden>
       <p id="loadErrorText"></p>
+      <!-- 이 브라우저에 아직 올리지 않은 작업 내용이 있으면 그것으로 이어서 (고친 내용이 사라지지 않게) -->
+      <div class="ed-load-draft" id="loadDraft" hidden>
+        <p id="loadDraftText"></p>
+        <button class="btn gold ed-sm" type="button" id="btnContinueDraft">보관된 작업 내용으로 이어서 하기</button>
+      </div>
       <p class="ed-hint">이 상태에서는 매물을 고치거나 내려받을 수 없습니다 — 빈 목록이 홈페이지 매물을 덮어쓰는 사고를 막기 위해서입니다.
         전에 내려받은 listings.json 이 있으면 아래 버튼으로 열어 이어서 작업할 수 있습니다.</p>
       <button class="btn navy ed-sm" type="button" id="btnImportErr">파일에서 불러오기</button>
@@ -233,7 +244,7 @@
         <button class="btn navy" type="button" id="btnUseServer">불러온 원본 사용</button>
         <button class="btn gold" type="button" id="btnUseDraft">임시 저장본 사용</button>
       </div>
-      <p class="small">불러온 원본 = 지금 홈페이지에 올라가 있는 listings.json (임시 저장본은 지웁니다).
+      <p class="small">불러온 원본 = 지금 홈페이지에 올라가 있는 listings.json (임시 저장본은 백업으로 옮겨 두고, '저장하기' 칸에서 다시 열 수 있습니다).
         임시 저장본 사용 = 이 브라우저에서 고친 매물만 최신 파일 위에 다시 적용합니다 (다른 매물은 최신 파일 그대로).</p>
     </section>
 
@@ -287,8 +298,9 @@
             <div class="ed-g2">
               <div class="ed-fld">
                 <label for="f-no">매물번호 <em class="ed-req">필수</em></label>
-                <input id="f-no" data-f="no" data-t="no" inputmode="numeric" aria-describedby="hint-no">
+                <input id="f-no" data-f="no" data-t="no" inputmode="numeric" aria-describedby="hint-no noWarn">
                 <p class="ed-hint" id="hint-no">영상 설명란의 "매물번호 1001"과 같은 번호입니다. 바꾸면 영상 설명란도 고쳐야 합니다.</p>
+                <p class="ed-fwarn" id="noWarn" hidden></p>
               </div>
               <div class="ed-fld">
                 <label for="f-updated">정보 갱신일</label>
@@ -367,16 +379,11 @@
               <div class="ed-fld"><label for="f-ri">리 <em class="ed-req" id="req-ri" hidden>필수</em></label><input id="f-ri" data-f="region.ri" placeholder="예: 망미리" aria-describedby="hint-ri"><p class="ed-hint" id="hint-ri">읍·면 지역은 리까지 꼭 적습니다.</p></div>
             </div>
             <datalist id="dl-eupmyeon"></datalist>
-            <div class="ed-g2">
-              <div class="ed-fld">
-                <label for="f-jibun">지번 (사무소 기록용 · 홈페이지에는 표시 안 함)</label>
-                <input id="f-jibun" data-f="region.jibun" placeholder="예: 123-4" aria-describedby="hint-jibun">
-                <p class="ed-hint" id="hint-jibun">비워 둬도 됩니다. 사무소 원칙상 홈페이지에는 리까지만 보이고, 정확한 위치는 상담할 때 안내합니다.</p>
-              </div>
-              <div class="ed-fld">
-                <span class="ed-lbl" aria-hidden="true">&nbsp;</span>
-                <label class="check"><input type="checkbox" id="f-showJibun" data-f="region.showJibun" data-t="bool" aria-describedby="pv-region"> <span>이 매물은 지번 공개</span></label>
-              </div>
+            <div class="ed-fld ed-jibun">
+              <label for="f-jibun">지번 (사무소 기록용 · 홈페이지에는 표시 안 함)</label>
+              <input id="f-jibun" data-f="region.jibun" placeholder="예: 123-4" aria-describedby="hint-jibun">
+              <p class="ed-hint" id="hint-jibun">비워 둬도 됩니다. 사무소 원칙상 홈페이지에는 리까지만 보이고, 정확한 위치는 상담할 때 안내합니다.</p>
+              <label class="check"><input type="checkbox" id="f-showJibun" data-f="region.showJibun" data-t="bool" aria-describedby="pv-region"> <span>이 매물은 지번 공개</span></label>
             </div>
             <output class="ed-pv-line" id="pv-region" for="f-sido f-sigungu f-eupmyeon f-ri f-jibun f-showJibun"></output>
           </section>
@@ -578,6 +585,7 @@
             <button class="btn ghost ed-sm" type="button" id="btnImport">파일에서 불러오기</button>
             <input type="file" id="importFile" accept=".json,application/json" hidden>
             <button class="btn ghost ed-sm ed-danger" type="button" id="btnReset">처음 상태로 되돌리기</button>
+            <button class="btn ghost ed-sm" type="button" id="btnRestoreBak" hidden>백업해 둔 작업 내용 되살리기</button>
           </div>
           <p class="ed-hint">작업 내용은 이 브라우저에만 임시 보관됩니다. 다른 기기에서 이어서 하려면 GitHub에 먼저 올리세요.</p>
         </section>

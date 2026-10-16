@@ -1,0 +1,10 @@
+name: 임시 점검 (블로그 사진)
+on:
+  push:
+    branches: [probe-blog]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 probe.py

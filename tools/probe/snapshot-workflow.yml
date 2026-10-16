@@ -1,0 +1,17 @@
+name: 임시 점검 (블로그·유튜브 원본 저장)
+on:
+  push:
+    branches: [probe-blog]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 snapshot.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add fixtures
+          git commit -q -m "원본 저장 (테스트 자료)" && git push -q origin HEAD:probe-blog
