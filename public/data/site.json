@@ -1,0 +1,40 @@
+{
+  "siteUrl": "https://phg908-dot.github.io/gaya-homepage",
+  "office": {
+    "name": "가야공인중개사사무소",
+    "ceo": "박홍균",
+    "regNo": "3644-198",
+    "address": "경기도 양평군 지평면 지평의병로 32",
+    "tel": "031-772-2060",
+    "mobile": "010-3406-0071",
+    "email": "",
+    "kakaoChannel": "",
+    "hours": "",
+    "intro": "양평 지평면 지평역 사거리에 있는 공인중개사사무소입니다. 토지·전원주택·농가주택을 중심으로, 매물은 현장을 직접 확인하고 가능한 매물은 유튜브 영상으로도 소개합니다.",
+    "lat": null,
+    "lng": null,
+    "addressNote": "지평역 사거리"
+  },
+  "youtube": {
+    "handle": "@가야부동산-w1w",
+    "channelId": "",
+    "name": "양평가야부동산"
+  },
+  "hiddenVideos": [],
+  "kakaoMap": {
+    "appKey": ""
+  },
+  "naverMap": {
+    "keyId": ""
+  },
+  "admin": {
+    "repoEditUrl": "https://github.com/phg908-dot/gaya-homepage/edit/main/public/data/listings.json"
+  },
+  "naver": {
+    "searchName": "양평 가야부동산"
+  },
+  "closedListingNos": [],
+  "policy": {
+    "directionBasis": "건물 정면 기준"
+  }
+}

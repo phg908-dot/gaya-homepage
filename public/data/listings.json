@@ -1,0 +1,250 @@
+[
+  {
+    "no": 1001,
+    "status": "거래중",
+    "featured": true,
+    "urgent": false,
+    "sample": true,
+    "title": "[샘플] 지평면 남향 전원주택 · 대지 170평",
+    "type": "전원주택",
+    "deal": "매매",
+    "price": 32000,
+    "deposit": null,
+    "monthly": null,
+    "region": {
+      "sido": "경기도",
+      "sigungu": "양평군",
+      "eupmyeon": "지평면",
+      "ri": "망미리",
+      "jibun": "123-4",
+      "showJibun": false
+    },
+    "land": {
+      "area": 562.0,
+      "jimok": "대",
+      "zoning": "계획관리지역",
+      "currentUse": "주택부지",
+      "road": "4m 포장도로 접함"
+    },
+    "building": {
+      "use": "단독주택",
+      "area": 84.5,
+      "totalFloors": 1,
+      "floor": "",
+      "approvalDate": "2015-03-20",
+      "direction": "남향",
+      "rooms": 3,
+      "baths": 2,
+      "parking": 2,
+      "moveIn": "즉시입주",
+      "maintenance": "없음",
+      "violation": false
+    },
+    "recommendedUse": [
+      "실거주",
+      "세컨하우스"
+    ],
+    "summary": "전기·정화조·지하수 완료, 지평역 차량 5분.",
+    "description": "샘플 매물입니다. 실제 매물로 교체하세요.\n남향 단층 주택, 마당 넓음, 진입로 포장.",
+    "features": [
+      "남향",
+      "지하수",
+      "진입로 포장"
+    ],
+    "videoIds": [],
+    "photos": [],
+    "lat": 37.4723,
+    "lng": 127.6342,
+    "updated": "2026-10-16"
+  },
+  {
+    "no": 1002,
+    "status": "거래중",
+    "featured": true,
+    "urgent": true,
+    "sample": true,
+    "title": "[샘플] 하천 접한 계획관리 토지 465평",
+    "type": "토지",
+    "deal": "매매",
+    "price": 18500,
+    "deposit": null,
+    "monthly": null,
+    "region": {
+      "sido": "경기도",
+      "sigungu": "양평군",
+      "eupmyeon": "지평면",
+      "ri": "옥현리",
+      "jibun": "",
+      "showJibun": false
+    },
+    "land": {
+      "area": 1537.2,
+      "jimok": "답",
+      "zoning": "계획관리지역",
+      "currentUse": "농지(휴경)",
+      "road": "3m 비포장 농로 접함"
+    },
+    "building": null,
+    "recommendedUse": [
+      "전원주택지",
+      "주말농장"
+    ],
+    "summary": "국유림 접함, 하천 조망. 농지전용 후 주택 신축 검토 가능.",
+    "description": "샘플 매물입니다. 실제 매물로 교체하세요.",
+    "features": [
+      "하천 조망",
+      "국유림 접함"
+    ],
+    "videoIds": [],
+    "photos": [],
+    "lat": 37.4612,
+    "lng": 127.6521,
+    "updated": "2026-10-10"
+  },
+  {
+    "no": 1003,
+    "status": "거래중",
+    "featured": false,
+    "urgent": false,
+    "sample": true,
+    "title": "[샘플] 양평읍 역세권 1층 상가",
+    "type": "상가",
+    "deal": "월세",
+    "price": null,
+    "deposit": 3000,
+    "monthly": 150,
+    "region": {
+      "sido": "경기도",
+      "sigungu": "양평군",
+      "eupmyeon": "양평읍",
+      "ri": "양근리",
+      "jibun": "",
+      "showJibun": false
+    },
+    "land": null,
+    "building": {
+      "use": "제1종 근린생활시설",
+      "area": 59.3,
+      "totalFloors": 4,
+      "floor": "1층",
+      "approvalDate": "2009-11-02",
+      "direction": "동향",
+      "rooms": null,
+      "baths": 1,
+      "parking": 1,
+      "moveIn": "11월 초순",
+      "maintenance": "월 8만원(공용전기·청소 포함)",
+      "violation": false
+    },
+    "recommendedUse": [
+      "카페",
+      "사무실"
+    ],
+    "summary": "양평역 도보 5분, 전면 노출 좋음.",
+    "description": "샘플 매물입니다. 실제 매물로 교체하세요.",
+    "features": [
+      "역세권",
+      "1층"
+    ],
+    "videoIds": [],
+    "photos": [],
+    "lat": 37.4917,
+    "lng": 127.4895,
+    "updated": "2026-10-05"
+  },
+  {
+    "no": 1004,
+    "status": "거래중",
+    "featured": false,
+    "urgent": false,
+    "sample": true,
+    "title": "[샘플] 용문면 임야 1,200평 · 전원주택지 가능",
+    "type": "임야",
+    "deal": "매매",
+    "price": 24000,
+    "deposit": null,
+    "monthly": null,
+    "region": {
+      "sido": "경기도",
+      "sigungu": "양평군",
+      "eupmyeon": "용문면",
+      "ri": "중원리",
+      "jibun": "",
+      "showJibun": false
+    },
+    "land": {
+      "area": 3966.9,
+      "jimok": "임야",
+      "zoning": "보전관리지역",
+      "currentUse": "임야(자연림)",
+      "road": "6m 군도 접함"
+    },
+    "building": null,
+    "recommendedUse": [
+      "전원주택단지",
+      "캠핑장"
+    ],
+    "summary": "완경사 남동향 임야, 계곡 도보 5분.",
+    "description": "샘플 매물입니다. 실제 매물로 교체하세요.",
+    "features": [
+      "완경사",
+      "계곡 인근"
+    ],
+    "videoIds": [],
+    "photos": [],
+    "lat": 37.5361,
+    "lng": 127.5772,
+    "updated": "2026-09-28"
+  },
+  {
+    "no": 1005,
+    "status": "계약완료",
+    "featured": false,
+    "urgent": false,
+    "sample": true,
+    "title": "[샘플] 개군면 농가주택 (계약완료 예시)",
+    "type": "농가주택",
+    "deal": "매매",
+    "price": 21000,
+    "deposit": null,
+    "monthly": null,
+    "region": {
+      "sido": "경기도",
+      "sigungu": "양평군",
+      "eupmyeon": "개군면",
+      "ri": "향리",
+      "jibun": "",
+      "showJibun": false
+    },
+    "land": {
+      "area": 650.0,
+      "jimok": "대",
+      "zoning": "계획관리지역",
+      "currentUse": "주택부지",
+      "road": ""
+    },
+    "building": {
+      "use": "단독주택",
+      "area": 66.0,
+      "totalFloors": 1,
+      "floor": "",
+      "approvalDate": "1998-05-11",
+      "direction": "남동향",
+      "rooms": 2,
+      "baths": 1,
+      "parking": 2,
+      "moveIn": "즉시입주",
+      "maintenance": "없음",
+      "violation": false
+    },
+    "recommendedUse": [],
+    "summary": "계약완료 매물은 홈페이지에 표시되지 않습니다.",
+    "description": "",
+    "features": [],
+    "videoIds": [],
+    "photos": [],
+    "lat": null,
+    "lng": null,
+    "updated": "2026-09-20"
+  }
+]

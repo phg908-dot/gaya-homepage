@@ -1,0 +1,6 @@
+# build.py 가 생성하는 파일 (배포 시 자동 생성)
+public/listing/
+dist/
+public/sitemap.xml
+public/robots.txt
+__pycache__/

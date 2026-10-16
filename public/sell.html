@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>매물 접수 · 땅·집 내놓기 | 가야공인중개사사무소</title>
+  <meta name="description" content="양평 토지·전원주택·농가주택을 내놓으실 분은 가야공인중개사사무소에 접수하세요. 직접 현장을 보고 영상으로 소개해 드립니다.">
+  <meta name="theme-color" content="#1f3a5f">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta property="og:site_name" content="가야공인중개사사무소">
+  <meta property="og:title" content="매물 접수 · 가야공인중개사사무소">
+  <meta property="og:description" content="땅·집을 내놓으실 계획이라면 — 현장 방문, 영상 촬영, 유튜브·홈페이지 소개">
+  <meta property="og:image" content="images/og.png">
+  <!--head-->
+  <link rel="icon" href="images/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png">
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"></noscript>
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-root="./" data-page="sell">
+  <a class="skip" href="#main">본문 바로가기</a>
+  <header class="top">
+    <div class="wrap top-in">
+      <a class="brand" href="./"><span class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 11.5 12 4l9 7.5V20h-6v-5H9v5H3z" fill="currentColor"/></svg></span><span data-office="name">가야공인중개사사무소</span></a>
+      <nav class="nav" aria-label="주 메뉴">
+        <a href="./#listings">매물</a>
+        <a href="videos.html">영상</a>
+        <a href="sell.html" aria-current="page">매물 접수</a>
+        <a href="about.html">사무소 소개</a>
+      </nav>
+      <a class="tel-btn" data-office="telLink" href="tel:0317722060">031-772-2060</a>
+    </div>
+  </header>
+
+
+  <main id="main">
+    <div class="page-head">
+      <div class="wrap">
+        <h1>매물 접수</h1>
+        <p>땅·집을 내놓으실 계획이신가요? 아래 내용을 남겨 주시면 확인 후 연락드립니다. 현장 방문과 상담은 무료입니다.</p>
+      </div>
+    </div>
+  <div class="wrap page">
+    <div class="grid2">
+      <form class="box form" id="sellForm" novalidate>
+        <h2>접수 내용</h2>
+        <p class="hint" style="margin:-6px 0 0"><span class="req" aria-hidden="true">*</span> 표시는 꼭 입력해 주세요.</p>
+        <div class="row2">
+          <div class="field">
+            <label for="fName">성함</label>
+            <input id="fName" type="text" autocomplete="name" placeholder="홍길동">
+          </div>
+          <div class="field">
+            <label for="fPhone">연락처 <span class="req" aria-hidden="true">*</span></label>
+            <input id="fPhone" type="tel" autocomplete="tel" inputmode="tel" placeholder="010-0000-0000" required aria-describedby="phoneErr">
+            <span class="hint" id="phoneErr" role="alert"></span>
+          </div>
+        </div>
+        <div class="field">
+          <label for="fAddr">매물 소재지 <span class="req" aria-hidden="true">*</span></label>
+          <input id="fAddr" type="text" placeholder="예: 양평군 지평면 망미리" required aria-describedby="addrHint addrErr">
+          <span class="hint" id="addrHint">지번은 상담 때 알려 주셔도 됩니다.</span>
+          <span class="hint" id="addrErr" role="alert"></span>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="fType">매물 종류</label>
+            <select id="fType">
+              <option>토지</option><option>임야</option><option>전원주택</option><option>농가주택</option><option>단독주택</option>
+              <option>상가</option><option>공장·창고</option><option>아파트·빌라</option><option>기타</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="fDeal">거래 희망</label>
+            <select id="fDeal"><option>매매</option><option>전세</option><option>월세</option><option>아직 모르겠음</option></select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label for="fArea">면적 (아시는 경우)</label>
+            <input id="fArea" type="text" placeholder="예: 대지 200평 / 건물 25평">
+          </div>
+          <div class="field">
+            <label for="fPrice">희망 가격 (선택)</label>
+            <input id="fPrice" type="text" placeholder="예: 2억 5천만원">
+          </div>
+        </div>
+        <div class="field">
+          <label for="fMemo">추가 내용</label>
+          <textarea id="fMemo" placeholder="도로 조건, 건물 상태, 급매 여부, 방문 가능한 시간 등"></textarea>
+        </div>
+
+        <div class="field">
+          <span class="hint" id="sendHint">아래 버튼을 누르면 입력하신 내용으로 <b>문자 앱</b>이 열립니다. 홈페이지에는 어떤 정보도 저장되지 않습니다.</span>
+        </div>
+        <div class="two">
+          <button class="btn gold" type="submit" id="submitBtn">문자로 보내기</button>
+          <button class="btn ghost" type="button" id="copyBtn">내용 복사</button>
+        </div>
+        <p class="out" id="preview" hidden aria-live="polite"></p>
+      </form>
+
+      <aside class="side">
+        <div class="panel">
+          <h2 class="h3">전화로 바로 상담</h2>
+          <a class="tel-big" data-office="telLink" href="tel:0317722060">031-772-2060</a>
+          <a class="tel-sub" data-office="mobileLink" href="#" hidden></a>
+          <p class="muted" data-office="hours"></p>
+          <a class="btn navy block" data-kakao="sms" data-body="[가야공인중개사] 매물 접수 상담 문의드립니다." href="#" target="_blank" rel="noopener">카카오톡으로 상담</a>
+        </div>
+        <div class="panel">
+          <h2 class="h3">접수 후 진행</h2>
+          <ol class="steps">
+            <li><b>연락 · 상담</b><span>희망 조건과 매물 상황을 여쭙니다.</span></li>
+            <li><b>서류 · 현장 확인</b><span>공부서류를 확인하고 현장을 방문합니다.</span></li>
+            <li><b>영상 촬영 · 공개</b><span>동의하시면 유튜브와 홈페이지에 소개합니다.</span></li>
+          </ol>
+        </div>
+      </aside>
+    </div>
+  </div>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <nav class="foot-nav" aria-label="하단 메뉴"><a href="./#listings">매물</a><a href="videos.html">영상</a><a href="sell.html">매물 접수</a><a href="about.html">사무소 소개</a><a data-youtube href="#" target="_blank" rel="noopener">유튜브</a></nav>
+      <p class="office-info" id="officeInfo"><!--office--></p>
+      <p class="muted small">© <span id="year"></span> <span data-office="name">가야공인중개사사무소</span></p>
+    </div>
+  </footer>
+
+  <nav class="mbar" aria-label="빠른 연락">
+    <a data-office="telLink" data-keep href="tel:0317722060"><span aria-hidden="true">☎</span> 전화</a>
+    <a data-kakao href="#" target="_blank" rel="noopener">카톡</a>
+  </nav>
+
+  <script src="assets/js/common.js"></script>
+  <script>
+  (async function () {
+    const G = window.GAYA, $ = (id) => document.getElementById(id);
+    let site = null;
+    try { site = (await G.loadData()).site; G.fillOfficeBits(site); G.renderFooter(site); } catch (e) { console.error(e); }
+
+    function message() {
+      const v = (id) => $(id).value.trim();
+      return [
+        "[홈페이지 매물 접수]",
+        `성함: ${v("fName") || "-"}`,
+        `연락처: ${v("fPhone")}`,
+        `소재지: ${v("fAddr")}`,
+        `종류: ${v("fType")} / 거래: ${v("fDeal")}`,
+        v("fArea") && `면적: ${v("fArea")}`,
+        v("fPrice") && `희망가격: ${v("fPrice")}`,
+        v("fMemo") && `내용: ${v("fMemo")}`,
+      ].filter(Boolean).join("\n");
+    }
+    function validate() {
+      const phone = $("fPhone").value.replace(/[^0-9]/g, "");
+      const okPhone = phone.length >= 9 && phone.length <= 12;
+      const okAddr = $("fAddr").value.trim().length >= 2;
+      $("phoneErr").textContent = okPhone ? "" : "연락 가능한 전화번호를 입력해 주세요.";
+      $("addrErr").textContent = okAddr ? "" : "매물이 있는 지역을 입력해 주세요.";
+      $("fPhone").setAttribute("aria-invalid", String(!okPhone));
+      $("fAddr").setAttribute("aria-invalid", String(!okAddr));
+      if (!okPhone) $("fPhone").focus(); else if (!okAddr) $("fAddr").focus();
+      return okPhone && okAddr;
+    }
+    // PC(마우스 환경)에서는 문자 앱이 열리지 않으므로 '복사 후 전화/카톡' 안내를 우선
+    const desktop = window.matchMedia("(pointer: fine)").matches && !/Android|iPhone|iPad/i.test(navigator.userAgent);
+    const tel = () => ((site && site.office && site.office.tel) || "031-772-2060");
+    if (desktop) {
+      $("sendHint").textContent = "PC에서는 문자 앱이 열리지 않습니다. '내용 복사' 후 카카오톡·문자로 보내시거나 전화로 말씀해 주세요. 홈페이지에는 어떤 정보도 저장되지 않습니다.";
+      $("submitBtn").textContent = "내용 복사";
+      $("copyBtn").hidden = true;
+    }
+    function show(text, note) {
+      $("preview").hidden = false;
+      $("preview").textContent = text + (note ? "\n\n" + note : "");
+      $("preview").scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+    async function copy(text, btn) {
+      try {
+        await navigator.clipboard.writeText(text);
+        btn.textContent = "복사됨 ✓";
+        G.announce("접수 내용을 복사했습니다");
+        setTimeout(() => { btn.textContent = btn === $("submitBtn") ? "내용 복사" : "내용 복사"; }, 2500);
+        return true;
+      } catch (_) {
+        btn.textContent = desktop ? "아래 내용을 선택해 복사하세요" : "아래 내용을 길게 눌러 복사하세요";
+        return false;
+      }
+    }
+    $("sellForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!validate()) return;
+      const text = message();
+      if (desktop) {
+        await copy(text, $("submitBtn"));
+        show(text, `복사한 내용을 보내 주시거나 ${tel()} 으로 전화 주세요.`);
+        return;
+      }
+      show(text);
+      const o = (site && site.office) || {};
+      const fallback = (document.querySelector("[data-office=telLink]").getAttribute("href") || "").replace(/^tel:/, "");
+      const to = String(o.mobile || o.tel || fallback).replace(/[^0-9+]/g, "");
+      location.href = `sms:${to}?&body=${encodeURIComponent(text)}`;
+    });
+    $("copyBtn").addEventListener("click", async () => {
+      if (!validate()) return;
+      const text = message();
+      await copy(text, $("copyBtn"));
+      show(text);
+    });
+  })();
+  </script>
+</body>
+</html>
