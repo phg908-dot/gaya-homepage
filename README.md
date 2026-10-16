@@ -144,7 +144,7 @@ scripts/
   "featured": true,                 // 추천 배지
   "urgent": false,                  // 급매 배지
   "title": "지평면 남향 전원주택 · 대지 170평",
-  "type": "전원주택",                // 토지, 임야, 전원주택, 농가주택, 상가, 공장·창고 …
+  "type": "전원주택",                // 토지, 임야, 전원주택, 단독주택, 상가, 공장·창고 …
   "deal": "매매",                    // 매매, 전세, 월세, 단기임대
   "price": 32000,                   // 만원 단위. 매매가 (전세는 deposit, 월세는 deposit+monthly)
   "deposit": null, "monthly": null,

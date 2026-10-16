@@ -148,7 +148,7 @@ class Normalize(unittest.TestCase):
              "", "토지"),
             ("양평 전원주택 3억대 | 잔디마당 남향 2층 단독주택 | 대지228평 건평53평",
              "", "전원주택"),
-            ("양평 지평면 농가주택 매매", "", "농가주택"),
+            ("양평 지평면 농가주택 매매", "", ""),
             ("(급매)양평 임야에 접한 숲세권 양평전원주택지 매매", "", "토지"),
         ]
         for title, desc, want in cases:
@@ -235,7 +235,7 @@ class Build(unittest.TestCase):
             self.assertIn("<li><b>2</b><span>거래 가능 매물</span></li>", html)
             self.assertIn('data-type="토지"', html)
             self.assertIn('data-type="전원주택"', html)
-            self.assertIn('data-type="농가주택"', html)
+            self.assertNotIn("농가주택", html)
             self.assertNotIn('data-type="상가"', html)
             self.assertIn('id="listHeading">매물</span>', html)
             self.assertNotIn("비밀-9", html)

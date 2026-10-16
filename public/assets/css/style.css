@@ -108,7 +108,11 @@ select:focus, input:focus, textarea:focus { border-color: var(--navy); outline: 
 
 /* ── 종류 버튼 */
 .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 18px; }
-@media (min-width: 800px) { .cats { grid-template-columns: repeat(4, 1fr); } }
+.cats .cat:last-child:nth-child(3) { grid-column: 1 / -1; }
+@media (min-width: 800px) {
+  .cats { grid-template-columns: repeat(3, 1fr); }
+  .cats .cat:last-child:nth-child(3) { grid-column: auto; }
+}
 .cat, .chip { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 64px; padding: 12px 14px; border-radius: 14px; border: 3px solid var(--navy); background: #fff; font-size: 22px; font-weight: 800; cursor: pointer; color: var(--navy); }
 .chip { min-height: 52px; font-size: 18px; border-radius: 999px; }
 .cat[aria-pressed=true], .chip[aria-pressed=true] { background: var(--navy); color: #fff; }

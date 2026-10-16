@@ -2,7 +2,7 @@
 (async function () {
   const G = window.GAYA, el = G.el;
   const $ = (id) => document.getElementById(id);
-  const CATS = ["", "토지", "전원주택", "농가주택"];
+  const CATS = ["", "토지", "전원주택"];
   const PAGE = 12;
 
   let data;
@@ -46,7 +46,6 @@
   // 집을 토지로, 전원주택지(땅)를 집으로 바꾸지 않는다. build.py video_category 와 같다.
   function categoryFrom(text) {
     const t = String(text || "").replace(/#[^\s#]+/g, " ");
-    if (/농가\s*주택(?!지)/.test(t)) return "농가주택";
     if (/단독주택|건평|\d+\s*층/.test(t)) return "전원주택";
     if (/토지|대지|임야|주택지|농지|주말농장|전원주택지/.test(t)) return "토지";
     if (/전원주택(?!지)/.test(t)) return "전원주택";
