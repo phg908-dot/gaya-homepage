@@ -2,7 +2,7 @@
 (async function () {
   const G = window.GAYA, el = G.el;
   const $ = (id) => document.getElementById(id);
-  const CATS = ["", "토지", "전원주택"];
+  const CATS = ["", "주택", "토지", "전·월세"];
   const PAGE = 12;
 
   let data;
@@ -42,17 +42,26 @@
 
   const state = { q: "", type: "", shown: PAGE };
 
-  // 제목으로 종류를 정한다. #양평전원주택 같은 해시태그와 설명의 대지·농지 언급은
+  // 보여 주는 종류는 주택, 토지, 전·월세. 제목의 해시태그와 설명의 대지·농지 언급은
   // 집을 토지로, 전원주택지(땅)를 집으로 바꾸지 않는다. build.py video_category 와 같다.
-  function categoryFrom(text) {
+  function categoryFrom(text, rental) {
     const t = String(text || "").replace(/#[^\s#]+/g, " ");
-    if (/단독주택|건평|\d+\s*층/.test(t)) return "전원주택";
+    if (rental && /전\s*·?\s*월세|전세|월세/.test(t)) return "전·월세";
+    if (/단독주택|건평|\d+\s*층/.test(t)) return "주택";
     if (/토지|대지|임야|주택지|농지|주말농장|전원주택지/.test(t)) return "토지";
-    if (/전원주택(?!지)/.test(t)) return "전원주택";
+    if (/전원주택(?!지)|(?<!농가)주택/.test(t)) return "주택";
     return "";
   }
   function videoCategory(v) {
-    return categoryFrom(v.title) || categoryFrom(String(v.description || "").slice(0, 300));
+    return categoryFrom(v.title, true) || categoryFrom(String(v.description || "").slice(0, 300), false);
+  }
+  function listingCategory(l) {
+    const deal = String(l.deal || "").replace(/\s/g, "");
+    if (deal === "전세" || deal === "월세" || deal === "단기임대" || deal === "전월세" || deal === "전·월세") return "전·월세";
+    const type = String(l.type || "");
+    if (/토지|임야/.test(type)) return "토지";
+    if (/주택|아파트|빌라|다가구|다세대|펜션|원룸/.test(type)) return "주택";
+    return "";
   }
 
   function haystack(l) {
@@ -71,7 +80,7 @@
   }
 
   function matchesListing(l) {
-    if (state.type && l.type !== state.type) return false;
+    if (state.type && listingCategory(l) !== state.type) return false;
     return textHit(haystack(l), state.q);
   }
   function matchesVideo(v) {

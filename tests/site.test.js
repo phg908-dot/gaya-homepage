@@ -44,8 +44,12 @@ async function page(browser, opts = {}) {
     const n = () => p.locator("#cards .card").count();
     ok(await n() === 4, "거래중 매물 4건 표시 (계약완료 제외)");
     await p.click('#cats .cat[data-type="토지"]');
-    ok(await n() === 1, "종류 버튼 필터");
-    ok(await p.evaluate(() => document.activeElement && document.activeElement.dataset.type === "토지"), "버튼을 눌러도 포커스 유지");
+    ok(await n() === 2, "토지 버튼 (임야 포함)");
+    await p.click('#cats .cat[data-type="주택"]');
+    ok(await n() === 1, "주택 버튼");
+    await p.click('#cats .cat[data-type="전·월세"]');
+    ok(await n() === 1, "전·월세 버튼");
+    ok(await p.evaluate(() => document.activeElement && document.activeElement.dataset.type === "전·월세"), "버튼을 눌러도 포커스 유지");
     ok(p.url().includes("type="), "종류가 주소에 반영");
     const catH = await p.locator('#cats .cat[data-type="토지"]').evaluate((e) => e.getBoundingClientRect().height);
     ok(catH >= 56, "종류 버튼이 큼");
@@ -148,19 +152,21 @@ async function page(browser, opts = {}) {
     await p.click(".yt-btn");
     ok(await p.evaluate(() => document.activeElement && document.activeElement.tagName === "IFRAME"), "재생 시 플레이어로 포커스");
 
-    console.log("매물 접수");
+    console.log("내 매물 맡기기");
     p = await page(browser, { mobile: true });
     await p.goto(BASE + "sell.html");
-    await p.waitForTimeout(300);
-    await p.click("#submitBtn");
-    ok((await p.textContent("#phoneErr")).length > 0, "필수 입력 검증");
-    await p.fill("#fPhone", "010-1234-5678");
-    await p.fill("#fAddr", "양평군 지평면");
-    const composed = await p.evaluate(() => new Promise((res) => {
-      document.getElementById("sellForm").addEventListener("submit", () => setTimeout(() => res(document.getElementById("preview").textContent), 50), { once: true });
-      document.getElementById("submitBtn").click();
-    }));
-    ok(composed.includes("양평군 지평면") && composed.includes("010-1234-5678"), "접수 문구 구성");
+    await p.waitForSelector(".entrust-actions a");
+    ok((await p.locator("h1").innerText()).trim() === "내 매물 맡기기", "맡기기 제목");
+    ok((await p.locator(".entrust .lead").innerText()).includes("전화 한 통이면 됩니다"), "한 문장");
+    ok(await p.locator("form, select").count() === 0, "접수 양식 없음");
+    const call = p.locator(".entrust-actions a").nth(0);
+    const sms = p.locator(".entrust-actions a").nth(1);
+    ok((await call.getAttribute("href")) === "tel:01034060071" && (await call.innerText()).includes("전화로 맡기기"), "전화로 맡기기");
+    const smsHref = decodeURIComponent(await sms.getAttribute("href"));
+    ok(smsHref.startsWith("sms:01034060071") && smsHref.includes("매물 내놓고 싶습니다") && smsHref.includes("주소:") && smsHref.includes("종류:") && smsHref.includes("희망가격:"), "문자 초안");
+    ok(await call.evaluate((e) => e.getBoundingClientRect().height) >= 60, "맡기기 버튼 높이");
+    ok(await p.evaluate(() => parseFloat(getComputedStyle(document.body).fontSize) >= 20), "맡기기 글자 20px 이상");
+    ok((await p.content()).includes("전·월세") && !(await p.locator("body").innerText()).includes("전원주택"), "접수 문구의 종류");
 
     console.log("배포 빌드");
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gaya-"));

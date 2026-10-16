@@ -7,7 +7,7 @@
 public/              ← 홈페이지 원본 (이 폴더 안의 data/*.json 만 고치면 됩니다)
   index.html           메인 (매물 검색·필터·지도·최신 영상)
   videos.html          영상 모음 (일반/쇼츠/매물 연결)
-  sell.html            매물 접수 (내용을 문자로 보내는 방식 — 개인정보를 저장하지 않음)
+  sell.html            내 매물 맡기기 (전화·문자 버튼만 — 양식 없음, 개인정보를 저장하지 않음)
   about.html           사무소 소개·대표 인사말·자주 묻는 질문 (인사말 문구는 이 파일에서 직접 수정)
   data/site.json       사무소 정보·유튜브·지도 설정
   data/listings.json   매물 목록

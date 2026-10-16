@@ -615,7 +615,7 @@ def agent_ld(site):
           "image": base + "/images/og.png" if base else None,
           "sameAs": same or None,
           "areaServed": ["경기도 양평군", "경기도 양평군 지평면"] if o.get("address") else None,
-          "knowsAbout": ["양평 지평 부동산", "양평 토지", "양평 전원주택"]}
+          "knowsAbout": ["양평 지평 부동산", "양평 주택", "양평 토지", "양평 전·월세"]}
     # 검색에서 쓰는 이름(양평 가야부동산 등)은 등록 상호와 함께 별칭으로만 (상호를 대신하지 않음)
     alt = [n.strip() for n in ((site.get("naver") or {}).get("searchName"), (site.get("youtube") or {}).get("name"))
            if isinstance(n, str) and n.strip() and n.strip() != o.get("name")]
@@ -825,21 +825,23 @@ def static_cards(listings):
     return "".join(static_card(l) for l in order)
 
 
-def _category_from(text):
-    """home.js categoryFrom 과 같은 규칙. 해시태그는 빼고 제목만 본다."""
+def _category_from(text, rental=False):
+    """home.js categoryFrom 과 같은 규칙. 해시태그는 빼고, 전·월세는 제목에서만 본다."""
     t = re.sub(r"#[^\s#]+", " ", text or "")
+    if rental and re.search(r"전\s*·?\s*월세|전세|월세", t):
+        return "전·월세"
     if re.search(r"단독주택|건평|\d+\s*층", t):
-        return "전원주택"
+        return "주택"
     if re.search(r"토지|대지|임야|주택지|농지|주말농장|전원주택지", t):
         return "토지"
-    if re.search(r"전원주택(?!지)", t):
-        return "전원주택"
+    if re.search(r"전원주택(?!지)|(?<!농가)주택", t):
+        return "주택"
     return ""
 
 
 def video_category(v):
     """제목 우선. 설명의 대지·농지 문장은 집을 토지로 바꾸지 않는다."""
-    return _category_from(v.get("title")) or _category_from((v.get("description") or "")[:300])
+    return _category_from(v.get("title"), rental=True) or _category_from((v.get("description") or "")[:300])
 
 
 def static_video_card(v):
@@ -927,7 +929,7 @@ def inject_static(out, site, listings=(), videos=()):
                 cards_html = static_video_cards(videos)
                 html = html.replace('id="listHeading">매물', 'id="listHeading">매물 영상')
                 html = html.replace('id="videos"', 'id="videos" hidden', 1)
-                html = html.replace('id="listNote">종류를 누르세요. 전체, 토지, 전원주택.',
+                html = html.replace('id="listNote">종류를 누르세요. 전체, 주택, 토지, 전·월세.',
                                     'id="listNote">등록된 매물 글이 없으면, 유튜브에 올린 현장 영상을 매물로 보여 드립니다.')
             else:
                 cards_html = ""

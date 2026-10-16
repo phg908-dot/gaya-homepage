@@ -108,11 +108,7 @@ select:focus, input:focus, textarea:focus { border-color: var(--navy); outline: 
 
 /* ── 종류 버튼 */
 .cats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 18px; }
-.cats .cat:last-child:nth-child(3) { grid-column: 1 / -1; }
-@media (min-width: 800px) {
-  .cats { grid-template-columns: repeat(3, 1fr); }
-  .cats .cat:last-child:nth-child(3) { grid-column: auto; }
-}
+@media (min-width: 800px) { .cats { grid-template-columns: repeat(4, 1fr); } }
 .cat, .chip { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 64px; padding: 12px 14px; border-radius: 14px; border: 3px solid var(--navy); background: #fff; font-size: 22px; font-weight: 800; cursor: pointer; color: var(--navy); }
 .chip { min-height: 52px; font-size: 18px; border-radius: 999px; }
 .cat[aria-pressed=true], .chip[aria-pressed=true] { background: var(--navy); color: #fff; }
@@ -235,6 +231,15 @@ select:focus, input:focus, textarea:focus { border-color: var(--navy); outline: 
 .page-head { background: var(--navy); color: #fff; padding: 36px 0 28px; }
 .page-head h1 { font-size: clamp(32px, 5vw, 44px); }
 .page-head p { margin: 10px 0 0; color: #fff; font-size: 20px; max-width: 740px; }
+body[data-page="sell"],
+body[data-page="sell"] .foot,
+body[data-page="sell"] .nav a,
+body[data-page="sell"] .small { font-size: 20px; }
+.entrust h1 { font-size: clamp(40px, 7vw, 56px); }
+.entrust .lead { font-size: 24px; margin: 12px 0 24px; max-width: none; }
+.entrust-actions { display: grid; gap: 16px; max-width: 760px; }
+@media (min-width: 700px) { .entrust-actions { grid-template-columns: 1fr 1fr; } }
+.entrust-actions .btn { min-height: 80px; font-size: 24px; padding: 18px 16px; }
 .prose { max-width: 760px; }
 .prose p { margin: 0 0 14px; font-size: 18px; }
 .grid2 { display: grid; gap: 18px; }

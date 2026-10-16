@@ -141,13 +141,15 @@ class Normalize(unittest.TestCase):
         # 해시태그의 전원주택, 설명의 대지는 종류를 바꾸지 않는다. 전원주택지는 땅이다.
         cases = [
             ("전기 많이 써도 월 약 5천 원? 양평 용문 전원주택 2,538㎡(768평)",
-             "대지 660㎡(200평)와 농지 1,878㎡", "전원주택"),
+             "대지 660㎡(200평)와 농지 1,878㎡", "주택"),
             ("지평 시내 대지 1억2천! 양평군 지평면 토지 330㎡(100평) #양평토지 #양평전원주택",
              "", "토지"),
             ("개울 옆 양평 지평 전원주택지 1,855㎡(562평) 2억3천 #양평토지",
              "", "토지"),
             ("양평 전원주택 3억대 | 잔디마당 남향 2층 단독주택 | 대지228평 건평53평",
-             "", "전원주택"),
+             "", "주택"),
+            ("양평 지평면 주택 전세", "", "전·월세"),
+            ("양평 토지 월세", "", "전·월세"),
             ("양평 지평면 농가주택 매매", "", ""),
             ("(급매)양평 임야에 접한 숲세권 양평전원주택지 매매", "", "토지"),
         ]
@@ -233,8 +235,10 @@ class Build(unittest.TestCase):
             self.assertLess(html.index('id="l6101"'), html.index('id="l6102"'), "급매가 먼저 (home.js 정렬과 같음)")
             self.assertIn('<h3><a href="listing/6102.html">&lt;b&gt;둘째&lt;/b&gt;</a></h3>', html)
             self.assertIn("<li><b>2</b><span>거래 가능 매물</span></li>", html)
+            self.assertIn('data-type="주택"', html)
             self.assertIn('data-type="토지"', html)
-            self.assertIn('data-type="전원주택"', html)
+            self.assertIn('data-type="전·월세"', html)
+            self.assertNotIn('data-type="전원주택"', html)
             self.assertNotIn("농가주택", html)
             self.assertNotIn('data-type="상가"', html)
             self.assertIn('id="listHeading">매물</span>', html)
