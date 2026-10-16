@@ -282,7 +282,7 @@ class Videos(unittest.TestCase):
     def fake(self, url, follow=True, timeout=20, data=None):
         if "feeds/videos.xml" in url:
             return 200, RSS
-        if "/shorts/" in url:
+        if "/shorts/" in url or "youtubei/v1/next" in url:
             return 0, b""  # 네트워크 오류 흉내 → 판단 보류
         if "oembed" in url:
             return (404, b"") if "GONE" in url else (200, b'{"title": "x"}')
@@ -297,6 +297,7 @@ class Videos(unittest.TestCase):
         keep = out["videos"][1]
         self.assertEqual((keep["title"], keep["description"]), ("T2", ""), "피드의 빈 설명도 반영")
         self.assertIsNone(out["videos"][0]["isShort"], "판단 불가는 None 으로 남겨 다음에 재시도")
+        self.assertNotIn("links", keep, "설명란을 못 읽었으면 링크 칸을 만들지 않아 다음에 다시 시도")
 
     def test_channel_page_fallback_when_rss_404(self):
         vids_page = {"contents": {"tabs": [{"richGridRenderer": {"contents": [
@@ -336,7 +337,12 @@ class Videos(unittest.TestCase):
             "metadata": {"lockupMetadataViewModel": {"title": {"content": "양평 지평면 토지 660㎡(200평) 2억3천 #양평토지"}}}}}]}
         nxt = {"contents": {"twoColumnWatchNextResults": {"results": {"results": {"contents": [
             {"videoPrimaryInfoRenderer": {"dateText": {"simpleText": "2026. 10. 3."}}},
-            {"videoSecondaryInfoRenderer": {"attributedDescription": {"content": "매물번호 1001 설명"}}}]}}}}}
+            {"videoSecondaryInfoRenderer": {"attributedDescription": {
+                "content": "매물번호 1001 설명\n글로 자세히 보기(블로그): https://blog.naver.com/gayayangpyeong...\n#양평토지",
+                "commandRuns": [
+                    {"startIndex": 30, "length": 40, "onTap": {"innertubeCommand": {"urlEndpoint": {
+                        "url": "https://www.youtube.com/redirect?event=video_description&redir_token=X&q=https%3A%2F%2Fblog.naver.com%2Fgayayangpyeong%2F224427678503&v=LLLLLLLLLL1"}}}},
+                    {"startIndex": 80, "length": 5, "onTap": {"innertubeCommand": {"commandMetadata": {"webCommandMetadata": {"url": "/hashtag/양평토지"}}}}}]}}}]}}}}}
 
         def fake(url, follow=True, timeout=20, data=None):
             if "feeds/videos.xml" in url:
@@ -357,6 +363,17 @@ class Videos(unittest.TestCase):
         self.assertFalse(out["LLLLLLLLLL1"]["isShort"])
         self.assertEqual(out["LLLLLLLLLL1"]["published"], "2026-10-03")
         self.assertIn("매물번호 1001", out["LLLLLLLLLL1"]["description"])
+        self.assertEqual(out["LLLLLLLLLL1"]["links"], ["https://blog.naver.com/gayayangpyeong/224427678503"],
+                         "화면에 잘려 보이는 블로그 주소 대신 링크의 원래 주소, 해시태그 링크는 제외")
+        keep = out["KEEPvideo01"]
+        self.assertIn("매물번호 1001 설명", keep["description"], "예전 영상도 설명란을 다시 읽어 바뀐 내용 반영")
+        self.assertEqual(keep["links"], ["https://blog.naver.com/gayayangpyeong/224427678503"])
+
+    def test_refresh_ignores_url_display_differences(self):
+        self.assertTrue(uv._same_text("글: https://blog.naver.com/gayayangpyeong/224427678503 끝", "글: https://blog.naver.com/gayayangpyeong... 끝"))
+        self.assertFalse(uv._same_text("매매가 2억 3,000만 원", "매매가 2억 1,000만 원"))
+        self.assertEqual(uv.text_links("블로그 https://blog.naver.com/a/1 와 https://blog.naver.com/gayayangpyeong... 그리고 https://youtu.be/x"),
+                         ["https://blog.naver.com/a/1"])
 
     def test_real_network_failure_does_not_raise(self):
         self.assertEqual(uv.http("http://127.0.0.1:9/", timeout=2)[0], 0)

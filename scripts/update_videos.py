@@ -222,8 +222,40 @@ def _find_key(node, key):
     return None
 
 
+LINK_MAX = 10
+URL_RE = re.compile(r"https?://[^\s<>\"'()]+")
+
+
+def _keep_link(u: str) -> bool:
+    host = urllib.parse.urlsplit(u).netloc.lower()
+    return bool(host) and not host.endswith(("youtube.com", "youtu.be", "google.com"))
+
+
+def text_links(text: str) -> list[str]:
+    """설명란 글자 속 주소 (화면용으로 '…...' 처럼 잘린 주소는 버림)"""
+    out = [u.rstrip(".,)") for u in URL_RE.findall(text or "") if not u.endswith(("...", "…"))]
+    return list(dict.fromkeys(u for u in out if _keep_link(u)))[:LINK_MAX]
+
+
+def description_links(sec: dict) -> list[str]:
+    """설명란 링크의 원래 주소. 화면에는 'blog.naver.com/gayayangpyeong...' 처럼 잘려 보여도
+    링크 자체(youtube.com/redirect?q=…)에는 블로그 글 주소 전체가 들어 있다."""
+    out = []
+    for run in (sec.get("attributedDescription") or {}).get("commandRuns") or []:
+        url = _find_key(run, "url")
+        if not isinstance(url, str):
+            continue
+        if "/redirect" in url:
+            q = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query).get("q")
+            url = q[0] if q else ""
+        if url.startswith(("http://", "https://")) and _keep_link(url):
+            out.append(url)
+    content = (sec.get("attributedDescription") or {}).get("content") or ""
+    return list(dict.fromkeys(out + text_links(content)))[:LINK_MAX]
+
+
 def fetch_next_details(vid: str) -> dict:
-    """내부 'next' 요청으로 게시일('2026. 10. 15.')·설명란을 읽는다"""
+    """내부 'next' 요청으로 게시일('2026. 10. 15.')·설명란·설명란 링크(원래 주소)를 읽는다"""
     data = innertube("next", {"videoId": vid})
     if not data:
         return {}
@@ -232,11 +264,18 @@ def fetch_next_details(vid: str) -> dict:
     m = re.search(r"(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})", _text(prim.get("dateText")))
     if m:
         out["published"] = f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
-    sec = _find_key(data, "videoSecondaryInfoRenderer") or {}
-    desc = (sec.get("attributedDescription") or {}).get("content") or _text(sec.get("description"))
-    if desc:
-        out["description"] = desc[:DESC_MAX]
+    sec = _find_key(data, "videoSecondaryInfoRenderer")
+    if isinstance(sec, dict):
+        desc = (sec.get("attributedDescription") or {}).get("content") or _text(sec.get("description"))
+        out["description"] = (desc or "")[:DESC_MAX]
+        out["links"] = description_links(sec)
     return out
+
+
+def _same_text(a: str, b: str) -> bool:
+    """설명란 비교: 주소 표기(전체 주소 ↔ 화면용 잘린 주소)만 다른 것은 같은 내용으로 본다 (불필요한 갱신 방지)"""
+    strip = lambda s: re.sub(r"\s+", " ", URL_RE.sub("", s or "")).strip()
+    return strip(a) == strip(b)
 
 
 def fetch_watch_details(vid: str) -> dict:
@@ -383,6 +422,29 @@ def main() -> int:
         if v.get("isShort") is None:
             v["isShort"] = is_short(vid)
             time.sleep(0.3)
+
+    # 설명란 다시 읽기: ① 링크(블로그 글 주소)를 아직 모르는 영상 (한 번에 최대 30개)
+    #                   ② 본편 영상을 매시간 6개씩 돌아가며 — 설명란에서 가격·내용을 고치면 홈페이지에도 반영
+    need = sorted(vid for vid, v in by_id.items() if "links" not in v)[:30]
+    longform = sorted(vid for vid, v in by_id.items() if v.get("isShort") is False and vid not in need)
+    start = (int(time.time() // 3600) * 6) % max(len(longform), 1)
+    refreshed = 0
+    for vid in need + (longform[start:] + longform[:start])[:6]:
+        d = fetch_next_details(vid)
+        time.sleep(0.3)
+        if "links" not in d:  # 읽지 못함 → 다음 실행에서 다시
+            continue
+        v = by_id[vid]
+        if not _same_text(d["description"], v.get("description", "")):
+            v["description"] = d["description"]
+            refreshed += 1
+        links = d["links"] or text_links(v.get("description", ""))
+        if v.get("links") != links:
+            v["links"] = links
+        if not v.get("published") and d.get("published"):
+            v["published"] = d["published"]
+    if refreshed:
+        print(f"설명란이 바뀐 영상 {refreshed}개를 갱신했습니다")
 
     # 피드(최근 15개)에 없는 예전 영상은 매시간 30개씩 돌아가며 삭제·비공개 여부와 제목 변경을 확인
     older = sorted(i for i in by_id if i not in feed_ids)
