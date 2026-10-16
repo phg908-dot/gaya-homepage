@@ -67,7 +67,8 @@ async function page(browser, opts = {}) {
     await p.click("#cats .cat-fav");
     ok(await n() === 1, "찜 필터");
     ok(await p.locator("#cards[aria-live]").count() === 0, "목록 전체를 읽어주는 aria-live 없음");
-    ok(await p.locator(".tel-sub:not([hidden])").count() >= 1, "상담 패널에 휴대폰 번호 표시");
+    ok((await p.textContent(".contact-panel .tel-big")).trim() === "010-3406-0071", "대표번호(휴대폰) 표시");
+    ok(!(await p.content()).includes("031-772-2060"), "사무실 번호는 표시하지 않음");
     ok(p.errors.length === 0, "JS 오류 없음 " + p.errors.join(" | "));
 
     console.log("메인 (모바일)");

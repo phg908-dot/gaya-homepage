@@ -718,8 +718,8 @@ def inject_static(out, site):
         html = html.replace("<!--office-->", office_spans(o))
         if f.name == "404.html":
             html = html.replace('href="/" data-home', f'href="{escape(base)}/" data-home' if base else 'href="/" data-home')
-            html = html.replace("tel:0317722060", "tel:" + re.sub(r"[^0-9+]", "", o.get("tel", "")))
-            html = html.replace("전화 031-772-2060", "전화 " + escape(o.get("tel", "")))
+            html = html.replace("tel:01034060071", "tel:" + re.sub(r"[^0-9+]", "", o.get("tel", "")))
+            html = html.replace("전화 010-3406-0071", "전화 " + escape(o.get("tel", "")))
         if f.name == "index.html":
             html = html.replace("<!--jsonld-->", f'<script type="application/ld+json">{ld_json(agent_ld(site))}</script>')
         if base:
