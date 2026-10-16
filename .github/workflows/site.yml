@@ -80,8 +80,11 @@ jobs:
         with:
           ref: ${{ github.event.repository.default_branch }}
 
-      - name: 배포본 생성 (샘플·계약완료·명시사항 누락 매물 제외, 사진 위치정보 제거)
-        run: python3 scripts/build.py --prod --gha
+      - name: 배포본 생성 (샘플·계약완료·명시사항 누락 매물 제외, 큰 사진 줄이기, 사진 위치정보 제거)
+        run: |
+          python3 -m pip install --quiet --user --break-system-packages pillow || python3 -m pip install --quiet pillow \
+            || echo "::warning::Pillow 설치 실패 — 사진을 줄이지 않고 배포합니다"
+          python3 scripts/build.py --prod --gha
 
       - name: gh-pages 브랜치로 공개
         run: |

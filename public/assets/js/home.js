@@ -24,9 +24,10 @@
   // ── 상단 현황 (0인 항목은 숨김)
   const shorts = videos.filter((v) => v.isShort).length;
   const eups = new Set(listings.map((l) => R(l).eupmyeon).filter(Boolean)).size;
-  [[listings.length, "거래 가능 매물"], [videos.length, "매물 영상"], [eups, "읍·면 지역"]]
+  // (배포본은 build.py 가 같은 내용을 미리 넣어 둠 → 덮어쓰기)
+  $("stats").replaceChildren(...[[listings.length, "거래 가능 매물"], [videos.length, "매물 영상"], [eups, "읍·면 지역"]]
     .filter(([n]) => n > 0)
-    .forEach(([n, label]) => $("stats").append(el("li", null, el("b", { text: String(n) }), el("span", { text: label }))));
+    .map(([n, label]) => el("li", null, el("b", { text: String(n) }), el("span", { text: label }))));
 
   // ── 추천·급매 (매물이 적을 때는 전체 목록과 중복되므로 생략)
   const picks = listings.filter((l) => l.featured || l.urgent)

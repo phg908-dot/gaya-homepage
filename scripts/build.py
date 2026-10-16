@@ -18,7 +18,7 @@ import struct
 import sys
 from datetime import date
 from html import escape
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -416,8 +416,23 @@ def listing_problems(l):
     return p
 
 
+SITE_URL_OK = re.compile(r"^https?://[^/\s]+")
+
+
+def site_url_problem(site):
+    u = str(site.get("siteUrl") or "").strip()
+    if not u:
+        return ("data/site.json siteUrl 이 비어 있어 sitemap.xml·canonical·공유 미리보기 이미지(절대 주소)를 만들지 않습니다 "
+                "— 홈페이지 주소(https://www.도메인 또는 https://아이디.github.io/저장소)를 넣으세요")
+    if not SITE_URL_OK.match(u):
+        return f"data/site.json siteUrl '{u}' 은(는) https:// 로 시작해야 합니다"
+    return None
+
+
 def check(site, listings):
     warns = office_problems(site)
+    if site_url_problem(site):
+        warns.append(site_url_problem(site))
     for l in listings:
         tag = f"매물 No.{l.get('no')}"
         if l.get("status") == "계약완료":
@@ -520,10 +535,10 @@ def seo_title(l, o):
 
 ICON = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 11.5 12 4l9 7.5V20h-6v-5H9v5H3z" fill="currentColor"/></svg>'
 FONT_URL = "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
-# 글꼴 CSS는 첫 화면 표시를 막지 않도록 비동기로 불러온다 (못 불러오면 기본 글꼴)
+# 글꼴 CSS는 첫 화면 표시를 막지 않도록 비동기로 불러온다 (못 불러오면 기본 글꼴).
+# crossorigin: preconnect 한 연결을 CSS·글꼴 파일이 함께 쓰도록. JS를 끈 방문자는 기본 글꼴(CDN 장애에 첫 화면이 막히지 않게)
 FONT = (f'<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>\n'
-        f'  <link rel="stylesheet" href="{FONT_URL}" media="print" onload="this.media=\'all\'">\n'
-        f'  <noscript><link rel="stylesheet" href="{FONT_URL}"></noscript>')
+        f'  <link rel="stylesheet" href="{FONT_URL}" crossorigin media="print" onload="this.media=\'all\'">')
 
 
 def header_html(root, o, current=""):
@@ -566,6 +581,11 @@ def nw_join(text):
     return " · ".join(f'<span class="nw">{escape(x)}</span>' for x in text.split(" · "))
 
 
+def url_path(p):
+    """사진 경로를 URL로 (공백·한글 인코딩). 이미 %20 처럼 적힌 경로는 두 번 인코딩하지 않는다."""
+    return quote(unquote(str(p)), safe="/")
+
+
 def ld_json(obj):
     # <script> 안에 넣는 JSON: <, >, & 를 모두 유니코드 이스케이프 (</script>, <!-- 로 깨지지 않게)
     return json.dumps(obj, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
@@ -579,6 +599,11 @@ def agent_ld(site):
           "address": {"@type": "PostalAddress", "streetAddress": o.get("address"), "addressCountry": "KR"} if o.get("address") else None,
           "image": base + "/images/og.png" if base else None,
           "sameAs": [youtube_url(site)] if youtube_url(site) else None}
+    # 검색에서 쓰는 이름(양평 가야부동산 등)은 등록 상호와 함께 별칭으로만 (상호를 대신하지 않음)
+    alt = [n.strip() for n in ((site.get("naver") or {}).get("searchName"), (site.get("youtube") or {}).get("name"))
+           if isinstance(n, str) and n.strip() and n.strip() != o.get("name")]
+    if alt:
+        ld["alternateName"] = list(dict.fromkeys(alt))
     if o.get("lat") is not None and o.get("lng") is not None:
         ld["geo"] = {"@type": "GeoCoordinates", "latitude": o["lat"], "longitude": o["lng"]}
     return {k: v for k, v in ld.items() if v}
@@ -594,16 +619,21 @@ def page(l, site, videos_by_id):
     desc = f"[{l.get('deal', '')}] {l.get('type', '')} {region_text(l.get('region'), True)} · {price_text(l)}. {l.get('summary', '')} 문의 {tel}".strip()
     photos = l.get("photos") or []
     vids = l.get("videoIds") or []
-    img = (f"{base}/{photos[0]}" if base else f"../{photos[0]}") if photos else (f"https://i.ytimg.com/vi/{vids[0]}/hqdefault.jpg" if vids else (f"{base}/images/og.png" if base else ""))
+    img = (f"{base}/{url_path(photos[0])}" if base else f"../{url_path(photos[0])}") if photos else (f"https://i.ytimg.com/vi/{vids[0]}/hqdefault.jpg" if vids else (f"{base}/images/og.png" if base else ""))
+    img_size = (480, 360) if not photos and vids else (1200, 630) if not photos and base else None
     url = f"{base}/listing/{l['no']}.html" if base else ""
     head_extra = (f'<link rel="canonical" href="{escape(url)}">\n  <meta property="og:url" content="{escape(url)}">\n  ' if url else "") + \
-                 (f'<meta property="og:image" content="{escape(img)}">\n  ' if img else "")
+                 (f'<meta property="og:image" content="{escape(img)}">\n  <meta property="og:image:alt" content="{escape(l["title"])}">\n  ' if img else "") + \
+                 (f'<meta property="og:image:width" content="{img_size[0]}">\n  <meta property="og:image:height" content="{img_size[1]}">\n  ' if img and img_size else "")
 
     video_html = "".join(
         f'<div class="yt{" yt-short" if (videos_by_id.get(v) or {}).get("isShort") else ""}" data-yt="{escape(v)}" data-title="{escape((videos_by_id.get(v) or {}).get("title", l["title"]))}">'
         f'<noscript><a href="https://www.youtube.com/watch?v={escape(v)}">유튜브에서 영상 보기</a></noscript></div>'
         for v in vids)
-    gallery = "".join(f'<img src="../{escape(p)}" alt="{escape(l["title"])} 사진 {i + 1}" loading="lazy" decoding="async">' for i, p in enumerate(photos))
+    # 영상이 없으면 첫 사진이 첫 화면의 가장 큰 요소 → 지연 로딩하지 않고 먼저 받는다
+    gallery = "".join(f'<img src="../{escape(url_path(p))}" alt="{escape(l["title"])} 사진 {i + 1}" '
+                      + ('fetchpriority="high"' if i == 0 and not vids else 'loading="lazy"') + ' decoding="async">'
+                      for i, p in enumerate(photos))
     spec = "".join(f'<tr class="grp"><th colspan="2" scope="colgroup">{escape(k)}</th></tr>' if v is None else
                    f"<tr><th scope=row>{escape(k)}</th><td>{escape(v)}</td></tr>" for k, v in rows(l))
     tags = "".join(f"<li>{escape(t)}</li>" for t in l.get("features") or [])
@@ -709,19 +739,122 @@ def page(l, site, videos_by_id):
 """
 
 
-def inject_static(out, site):
+# ── 첫 화면 정적 렌더링: JS를 실행하지 않는 검색 수집기도 매물 링크·사무소 정보를 읽고,
+#    JS가 같은 모양으로 다시 그릴 때 화면이 밀리지 않도록 (common.js card()·home.js 와 같은 구조)
+def _num(v):
+    return int(v) if isinstance(v, float) and v.is_integer() else v
+
+
+def spec_line(l):
+    """common.js specLine 과 같음"""
+    b, land = l.get("building") or {}, l.get("land") or {}
+    parts = []
+    if b.get("area"):
+        if land.get("area"):
+            parts.append("대지 " + area_text(land["area"]))
+        parts.append("전용 " + area_text(b["area"]))
+        rb = " · ".join(x for x in [f"방 {_num(b['rooms'])}" if b.get("rooms") is not None else "",
+                                              f"욕실 {_num(b['baths'])}" if b.get("baths") is not None else ""] if x)
+        if rb:
+            parts.append(rb)
+    elif l.get("land"):
+        parts += [x for x in [land.get("jimok"), land.get("zoning"), area_text(land.get("area")) if land.get("area") else ""] if x]
+    return " · ".join(parts)
+
+
+def building_line(l):
+    """common.js buildingLine 과 같음"""
+    b = l.get("building")
+    if not b:
+        return ""
+    return " · ".join(x for x in [
+        f"총 {_num(b['totalFloors'])}층" + (f"({b['floor']})" if b.get("floor") else "") if b.get("totalFloors") else "",
+        str(b["approvalDate"])[:7].replace("-", ".", 1) + " 사용승인" if b.get("approvalDate") else "",
+        direction_text(b.get("direction")),
+        f"주차 {_num(b['parking'])}대" if b.get("parking") is not None else "",
+        f"입주 {b['moveIn']}" if b.get("moveIn") else "",
+        f"관리비 {b['maintenance']}" if b.get("maintenance") else "",
+    ] if x)
+
+
+def static_card(l):
+    no, title, typ = l["no"], l.get("title", ""), l.get("type", "")
+    photos, vids = l.get("photos") or [], l.get("videoIds") or []
+    img = url_path(photos[0]) if photos else f"https://i.ytimg.com/vi/{vids[0]}/hqdefault.jpg" if vids else ""
+    media = (f'<img src="{escape(img)}" alt="" loading="lazy" decoding="async">' if img
+             else f'<div class="ph" aria-hidden="true"><span>{escape(typ)}</span></div>')
+    badges = "".join([
+        '<span class="b b-urgent">급매</span>' if l.get("urgent") else "",
+        '<span class="b b-feat">추천</span>' if l.get("featured") else "",
+        '<span class="b b-video">▶ 영상</span>' if vids else "",
+        '<span class="b b-viol">위반건축물</span>' if (l.get("building") or {}).get("violation") else "",
+    ])
+    spec = spec_line(l)
+    return (f'<article class="card" id="l{no}">'
+            f'<a class="card-link" href="listing/{no}.html" aria-label="No.{no} {escape(title)} 상세보기"></a>'
+            f'<div class="card-media">{media}<div class="badges">{badges}</div><span class="no">No.{no}</span></div>'
+            f'<div class="card-body"><p class="meta"><span class="deal deal-{escape(l.get("deal", ""))}">{escape(l.get("deal", ""))}</span> '
+            f'{escape(typ)} · {escape(region_text(l.get("region"), True))}</p>'
+            f'<h3><a href="listing/{no}.html">{escape(title)}</a></h3>'
+            f'<p class="price">{escape(price_text(l))}</p>'
+            + (f'<p class="spec-line">{nw_join(spec)}</p>' if spec else "")
+            + (f'<p class="spec-line2">{nw_join(building_line(l))}</p>' if l.get("building") else "")
+            + (f'<p class="sum">{escape(l["summary"])}</p>' if l.get("summary") else "")
+            + "</div></article>")
+
+
+def static_cards(listings):
+    """home.js SORTS.new 와 같은 순서 (급매·추천·갱신일·번호)"""
+    order = sorted(listings, key=lambda l: (bool(l.get("urgent")), bool(l.get("featured")), str(l.get("updated") or ""), l["no"]), reverse=True)
+    return "".join(static_card(l) for l in order)
+
+
+def static_stats(listings, videos):
+    """home.js 상단 현황과 같음 (0인 항목은 숨김)"""
+    eups = len({(l.get("region") or {}).get("eupmyeon") for l in listings} - {None, ""})
+    items = [(len(listings), "거래 가능 매물"), (len(videos), "매물 영상"), (eups, "읍·면 지역")]
+    return "".join(f"<li><b>{n}</b><span>{k}</span></li>" for n, k in items if n > 0)
+
+
+OFFICE_TEXT_RE = re.compile(r'(<(\w+)\b([^>]*)\bdata-office="(name|ceo|regNo|address|intro|hours)"([^>]*)>)[^<]*(</\2>)')
+
+
+def fill_office_text(html, o):
+    """data-office 글자 칸을 미리 채운다 (common.js fillOfficeBits 와 같은 값). 값이 없으면 그대로 둔다."""
+    def rep(m):
+        key = m.group(4)
+        v = o.get(key)
+        if not v:
+            return m.group(0)
+        if key == "address" and o.get("addressNote") and "data-keep" not in m.group(1):
+            v = f"{v} ({o['addressNote']})"
+        return m.group(1) + escape(str(v)) + m.group(6)
+    return OFFICE_TEXT_RE.sub(rep, html)
+
+
+def inject_static(out, site, listings=(), videos=()):
     """배포본 HTML에 사무소 명시사항(정적)·구조화 데이터·절대 URL 메타를 넣는다 (JS 없이도 보이도록)."""
     o = site["office"]
     base = (site.get("siteUrl") or "").rstrip("/")
     for f in out.glob("*.html"):
         html = f.read_text(encoding="utf-8")
         html = html.replace("<!--office-->", office_spans(o))
+        html = fill_office_text(html, o)
+        if not o.get("hours"):
+            html = re.sub(r'\s*<dt>상담 시간</dt><dd data-office="hours"></dd>', "", html)
         if f.name == "404.html":
             html = html.replace('href="/" data-home', f'href="{escape(base)}/" data-home' if base else 'href="/" data-home')
             html = html.replace("tel:01034060071", "tel:" + re.sub(r"[^0-9+]", "", o.get("tel", "")))
             html = html.replace("전화 010-3406-0071", "전화 " + escape(o.get("tel", "")))
         if f.name == "index.html":
             html = html.replace("<!--jsonld-->", f'<script type="application/ld+json">{ld_json(agent_ld(site))}</script>')
+            html = html.replace('<div class="cards" id="cards"></div>', f'<div class="cards" id="cards">{static_cards(listings)}</div>')
+            html = html.replace('<ul class="stats" id="stats" aria-label="현황"></ul>', f'<ul class="stats" id="stats" aria-label="현황">{static_stats(listings, videos)}</ul>')
+            types = {l.get("type") for l in listings}
+            html = re.sub(r'\n\s*<a href="#listings" data-quick="([^"]+)">[^<]*</a>', lambda m: m.group(0) if m.group(1) in types else "", html)
+            if not listings:
+                html = html.replace('<div class="empty" id="emptyNone" hidden>', '<div class="empty" id="emptyNone">')
+                html = html.replace('<div class="sec-tools" id="listTools">', '<div class="sec-tools" id="listTools" hidden>')
         if base:
             path = "" if f.name == "index.html" else f.name
             html = html.replace("<!--head-->", f'<link rel="canonical" href="{escape(base)}/{path}">\n  <meta property="og:url" content="{escape(base)}/{path}">')
@@ -812,6 +945,33 @@ def strip_webp(b):
     return b"RIFF" + struct.pack("<I", len(out) + 4) + b"WEBP" + bytes(out)
 
 
+PHOTO_MAX = 1600  # 긴 변 px — 카드(약 360px × 화면 배율 3)·상세·공유 미리보기에 충분
+
+
+def shrink_photos(folder):
+    """배포본(dist/)의 큰 휴대폰 사진을 줄인다 (원본은 그대로). Pillow가 없으면 큰 사진 경고만."""
+    try:
+        from PIL import Image, ImageOps
+    except ImportError:
+        return 0, [f"{f.name}: {f.stat().st_size // 1024}KB — 사진이 커서 휴대폰에서 늦게 뜹니다 (Pillow가 있으면 배포 때 자동으로 줄입니다)"
+                   for f in sorted(folder.rglob("*")) if f.suffix.lower() in (".jpg", ".jpeg") and f.stat().st_size > 1_000_000]
+    n, warns = 0, []
+    for f in sorted(folder.rglob("*")):
+        if f.suffix.lower() not in (".jpg", ".jpeg"):
+            continue
+        try:
+            with Image.open(f) as im:
+                if max(im.size) <= PHOTO_MAX and f.stat().st_size <= 600_000:
+                    continue
+                im = ImageOps.exif_transpose(im).convert("RGB")  # 회전을 픽셀에 반영 (EXIF를 버리므로 필요)
+                im.thumbnail((PHOTO_MAX, PHOTO_MAX), Image.LANCZOS)
+                im.save(f, "JPEG", quality=82, optimize=True, progressive=True)  # exif 미지정 → GPS 등 메타데이터도 제거
+                n += 1
+        except Exception as e:
+            warns.append(f"{f.name}: 사진을 줄이지 못했습니다 ({e})")
+    return n, warns
+
+
 def strip_photo_metadata(folder):
     done, warns = 0, []
     for f in sorted(folder.rglob("*")):
@@ -861,6 +1021,10 @@ def main():
                 print(ERR + e)
             print(ERR + "사무소 명시사항이 모두 채워져야 배포됩니다. 배포를 중단합니다.")
             return 1
+        u = str(site.get("siteUrl") or "").strip()
+        if u and not SITE_URL_OK.match(u):  # 잘못된 주소로 canonical 을 만들면 검색에서 404 로 연결됨 (이전 배포는 그대로 유지)
+            print(ERR + site_url_problem(site))
+            return 1
         # 배포본은 dist/ 에 따로 만든다 (원본 public/ 은 건드리지 않음)
         out = DIST
         if out.exists():
@@ -891,7 +1055,12 @@ def main():
         videos = kept
         listings = [l for l in listings if publishable(l)]
         (out / "data" / "listings.json").write_text(json.dumps([public_copy(l) for l in listings], ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        inject_static(out, site)
+        inject_static(out, site, listings, videos)
+        n, pw = shrink_photos(out / "images")
+        for w in pw:
+            print(WARN + w)
+        if n:
+            print(f"큰 사진 {n}장을 홈페이지용 크기(긴 변 {PHOTO_MAX}px)로 줄였습니다 (원본은 그대로)")
         n, pw = strip_photo_metadata(out / "images")
         for w in pw:
             print(WARN + w)

@@ -122,6 +122,8 @@ main:focus { outline: none; }
 .card:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgb(16 24 40 / .06), 0 12px 28px rgb(16 24 40 / .10); }
 .card-link { position: absolute; inset: 0; z-index: 2; border-radius: var(--radius); }
 .card-link:focus-visible { outline-offset: -3px; }
+/* 배포본의 미리 그린 카드(제목 링크) — JS 카드와 같은 모양 */
+.card h3 a { color: inherit; text-decoration: none; }
 .card-media { position: relative; aspect-ratio: 16 / 10; background: #dfe5ec; }
 .card-media img { width: 100%; height: 100%; object-fit: cover; }
 .ph { width: 100%; height: 100%; display: grid; place-items: center; color: #4f5d6e; font-weight: 800; font-size: 20px;

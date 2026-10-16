@@ -202,6 +202,59 @@ class Build(unittest.TestCase):
             r = subprocess.run([sys.executable, "scripts/build.py", "--prod"], cwd=tmp, capture_output=True, text=True)
             self.assertEqual(r.returncode, 1, "사무소 명시사항이 비면 배포 중단")
 
+    def test_static_first_paint_for_crawlers(self):
+        """JS 없이도 매물 링크·현황·사무소 정보가 보이고, 매물 없는 종류의 빠른 링크는 빠진다"""
+        with tempfile.TemporaryDirectory() as tmp:
+            shutil.copytree(SITE / "public", Path(tmp) / "public", ignore=shutil.ignore_patterns("listing"))
+            shutil.copytree(SITE / "scripts", Path(tmp) / "scripts")
+            (Path(tmp) / "public/data/listings.json").write_text(json.dumps(
+                [dict(BASE, no=6101, urgent=True, region=dict(BASE["region"], jibun="비밀-9")), dict(BASE, no=6102, title="<b>둘째</b>")], ensure_ascii=False))
+            r = subprocess.run([sys.executable, "scripts/build.py", "--prod"], cwd=tmp, capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            html = (Path(tmp) / "dist/index.html").read_text(encoding="utf-8")
+            self.assertLess(html.index('id="l6101"'), html.index('id="l6102"'), "급매가 먼저 (home.js 정렬과 같음)")
+            self.assertIn('<h3><a href="listing/6102.html">&lt;b&gt;둘째&lt;/b&gt;</a></h3>', html)
+            self.assertIn("<li><b>2</b><span>거래 가능 매물</span></li>", html)
+            self.assertIn('data-quick="토지"', html)
+            self.assertNotIn('data-quick="상가"', html)
+            self.assertNotIn("비밀-9", html)
+            o = json.loads((SITE / "public/data/site.json").read_text())["office"]
+            self.assertIn(f'<dd data-office="address">{o["address"]}', html)
+            self.assertIn('<div class="empty" id="emptyNone" hidden>', html)
+            self.assertIn("양평 가야부동산", html)
+            # 매물이 하나도 없으면 안내 문구를 처음부터 보여준다
+            (Path(tmp) / "public/data/listings.json").write_text("[]")
+            subprocess.run([sys.executable, "scripts/build.py", "--prod"], cwd=tmp, capture_output=True, text=True)
+            html = (Path(tmp) / "dist/index.html").read_text(encoding="utf-8")
+            self.assertIn('<div class="empty" id="emptyNone">', html)
+            self.assertNotIn("data-quick=", html)
+
+    def test_site_url_and_photo_paths(self):
+        self.assertIsNone(build.site_url_problem({"siteUrl": "https://a.github.io/repo"}))
+        self.assertIn("비어", build.site_url_problem({"siteUrl": ""}))
+        self.assertIn("https://", build.site_url_problem({"siteUrl": "www.example.kr"}))
+        self.assertEqual(build.url_path("images/1001 거실.jpg"), "images/1001%20%EA%B1%B0%EC%8B%A4.jpg")
+        self.assertEqual(build.url_path("images/1002%20a.jpg"), "images/1002%20a.jpg")
+        ld = build.agent_ld({"office": {"name": "가야공인중개사사무소"}, "naver": {"searchName": "양평 가야부동산"}, "youtube": {"name": "양평가야부동산"}})
+        self.assertEqual(ld["alternateName"], ["양평 가야부동산", "양평가야부동산"])
+
+    @unittest.skipUnless(importlib.util.find_spec("PIL"), "Pillow 없음")
+    def test_big_photos_are_shrunk_and_rotated(self):
+        from PIL import Image
+        with tempfile.TemporaryDirectory() as tmp:
+            im = Image.new("RGB", (4000, 3000), "white")
+            exif = Image.Exif()
+            exif[0x0112] = 6  # 세로로 찍은 사진
+            im.save(Path(tmp) / "big.jpg", "JPEG", exif=exif.tobytes())
+            Image.new("RGB", (800, 600)).save(Path(tmp) / "small.jpg", "JPEG")
+            n, warns = build.shrink_photos(Path(tmp))
+            self.assertEqual((n, warns), (1, []))
+            with Image.open(Path(tmp) / "big.jpg") as out:
+                self.assertEqual(out.size, (1200, 1600), "회전이 픽셀에 반영되고 긴 변 1600px")
+                self.assertNotIn(0x0112, out.getexif())
+            with Image.open(Path(tmp) / "small.jpg") as out:
+                self.assertEqual(out.size, (800, 600))
+
 
 RSS = b"""<?xml version="1.0"?><feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
 <entry><yt:videoId>NEWvideo001</yt:videoId><title>T1</title><published>2026-10-15T09:00:00+00:00</published><media:group><media:description>D</media:description></media:group></entry>

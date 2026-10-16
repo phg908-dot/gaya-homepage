@@ -40,7 +40,7 @@ scripts/
 
 **Cloudflare Pages**
 1. dash.cloudflare.com 가입 → Workers & Pages → Create → Pages → *Connect to Git* → 저장소 선택
-2. Framework preset: `None` · Build command: `python3 scripts/build.py --prod` · Build output directory: `dist`
+2. Framework preset: `None` · Build command: `pip install pillow; python3 scripts/build.py --prod` (Pillow: 휴대폰 사진을 배포 때 자동으로 줄임) · Build output directory: `dist`
 3. Save and Deploy. 이후 커밋(영상 자동 갱신 포함)마다 자동으로 다시 배포됩니다.
 
 **GitHub Pages** (기본 설정 — 따로 할 일 없음)
@@ -171,7 +171,7 @@ scripts/
   "description": "상세 설명 (줄바꿈은 \\n)",
   "features": ["남향", "지하수"],
   "videoIds": [],                   // 설명란에 매물번호를 넣었다면 비워 둬도 자동 연결
-  "photos": ["images/1005-1.jpg"],  // public/images 에 사진 업로드
+  "photos": ["images/1005-1.jpg"],  // public/images 에 사진 업로드 (휴대폰 원본 그대로 OK — 배포 때 긴 변 1600px로 줄이고 위치정보 삭제)
   "lat": 37.47, "lng": 127.63,      // 지도 표시용 — 정확한 지번이 아닌 리(里) 단위 대략 위치 권장
   "updated": "2026-10-16"
 }
