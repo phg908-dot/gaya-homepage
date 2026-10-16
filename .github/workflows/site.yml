@@ -1,5 +1,5 @@
 # 홈페이지 자동화
-#  1) 매시간 유튜브 채널의 새 영상을 확인해 public/data/videos.json 에 추가하고 커밋
+#  1) 매시간 유튜브 새 영상과 네이버 블로그 새 글을 확인해 public/data/videos.json · blog.json 에 저장하고 커밋
 #  2) 매물/설정 파일을 고쳐 main에 올리면 명시사항 점검 결과를 Actions 화면에 표시
 #  3) 배포본을 gh-pages 브랜치에 올림 (GitHub Pages: Settings → Pages → Deploy from a branch → gh-pages)
 #     Cloudflare Pages를 쓰는 경우 저장소 변수 HOSTING=cloudflare 로 3)을 끔
@@ -30,25 +30,26 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: 유튜브 새 영상 수집
+      - name: 유튜브 영상·네이버 블로그 수집
         id: videos
         env:
           YT_API_KEY: ${{ secrets.YT_API_KEY }}
         run: |
           python3 scripts/update_videos.py || echo "::warning::영상 수집 실패 — 기존 목록을 유지합니다"
-          if git diff --quiet -- public/data/videos.json; then
+          python3 scripts/update_blog.py || echo "::warning::블로그 수집 실패 — 기존 목록을 유지합니다"
+          if git diff --quiet -- public/data/videos.json public/data/blog.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: 영상 목록 커밋
+      - name: 영상·블로그 목록 커밋
         if: steps.videos.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/videos.json
-          git commit -m "유튜브 영상 목록 자동 갱신"
+          git add public/data/videos.json public/data/blog.json
+          git commit -m "유튜브 영상·네이버 블로그 목록 자동 갱신"
           git pull --rebase
           git push
 

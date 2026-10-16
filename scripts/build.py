@@ -563,7 +563,7 @@ def office_spans(o):
 def footer_html(root, o):
     return f"""<footer class="foot">
     <div class="wrap">
-      <nav class="foot-nav" aria-label="하단 메뉴"><a href="{root}#listings">매물</a><a href="{root}videos.html">영상</a><a href="{root}sell.html">매물 접수</a><a href="{root}about.html">사무소 소개</a><a data-youtube href="#" target="_blank" rel="noopener">유튜브</a></nav>
+      <nav class="foot-nav" aria-label="하단 메뉴"><a href="{root}#listings">매물</a><a href="{root}videos.html">영상</a><a href="{root}sell.html">매물 접수</a><a href="{root}about.html">사무소 소개</a><a data-youtube href="#" target="_blank" rel="noopener">유튜브</a><a data-blog href="https://blog.naver.com/gayayangpyeong" target="_blank" rel="noopener">블로그</a><a data-instagram href="https://www.instagram.com/honggyun8/" target="_blank" rel="noopener">인스타그램</a></nav>
       <p class="office-info" id="officeInfo">{office_spans(o)}</p>
       <p class="muted small">매물 정보는 갱신일 기준이며, 계약 전 반드시 현장과 공부서류를 확인하시기 바랍니다. © {date.today().year} {escape(o.get('name', ''))}</p>
     </div>
@@ -607,11 +607,15 @@ def postal_address(addr):
 def agent_ld(site):
     o = site["office"]
     base = (site.get("siteUrl") or "").rstrip("/")
+    same = [u for u in (youtube_url(site), str((site.get("blog") or {}).get("url") or "").split("?")[0],
+                       str((site.get("instagram") or {}).get("url") or "")) if u]
     ld = {"@context": "https://schema.org", "@type": "RealEstateAgent", "name": o.get("name"),
           "telephone": intl_tel(o.get("tel")), "url": base + "/" if base else None,
           "address": postal_address(o.get("address")) if o.get("address") else None,
           "image": base + "/images/og.png" if base else None,
-          "sameAs": [youtube_url(site)] if youtube_url(site) else None}
+          "sameAs": same or None,
+          "areaServed": ["경기도 양평군", "경기도 양평군 지평면"] if o.get("address") else None,
+          "knowsAbout": ["양평 지평 부동산", "양평 토지", "양평 전원주택", "양평 농가주택"]}
     # 검색에서 쓰는 이름(양평 가야부동산 등)은 등록 상호와 함께 별칭으로만 (상호를 대신하지 않음)
     alt = [n.strip() for n in ((site.get("naver") or {}).get("searchName"), (site.get("youtube") or {}).get("name"))
            if isinstance(n, str) and n.strip() and n.strip() != o.get("name")]
@@ -682,7 +686,7 @@ def page(l, site, videos_by_id):
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{escape(title)}</title>
   <meta name="description" content="{escape(desc)}">
-  <meta name="theme-color" content="#1f3a5f">
+  <meta name="theme-color" content="#0b2545">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="ko_KR">
   <meta name="twitter:card" content="summary_large_image">
@@ -741,9 +745,8 @@ def page(l, site, videos_by_id):
   </main>
   {footer_html("../", o)}
   <nav class="mbar" aria-label="빠른 연락">
-    <a href="{tel_href}"><span aria-hidden="true">☎</span> 전화</a>
-    <a href="sms:{sms_to}?&body={quote('[가야공인중개사] 매물 No.' + str(l['no']) + ' 문의드립니다.')}"><span aria-hidden="true">✉</span> 문자</a>
-    <a data-kakao href="#" target="_blank" rel="noopener">카톡</a>
+    <a href="{tel_href}">전화하기</a>
+    <a href="sms:{sms_to}?&body={quote('[가야공인중개사] 매물 No.' + str(l['no']) + ' 문의드립니다.')}">문자하기</a>
   </nav>
   <script src="../assets/js/common.js"></script>
   <script src="../assets/js/listing.js"></script>
@@ -822,6 +825,65 @@ def static_cards(listings):
     return "".join(static_card(l) for l in order)
 
 
+def _category_from(text):
+    """home.js categoryFrom 과 같은 규칙. 해시태그는 빼고 제목만 본다."""
+    t = re.sub(r"#[^\s#]+", " ", text or "")
+    if re.search(r"농가\s*주택(?!지)", t):
+        return "농가주택"
+    if re.search(r"단독주택|건평|\d+\s*층", t):
+        return "전원주택"
+    if re.search(r"토지|대지|임야|주택지|농지|주말농장|전원주택지", t):
+        return "토지"
+    if re.search(r"전원주택(?!지)", t):
+        return "전원주택"
+    return ""
+
+
+def video_category(v):
+    """제목 우선. 설명의 대지·농지 문장은 집을 토지로 바꾸지 않는다."""
+    return _category_from(v.get("title")) or _category_from((v.get("description") or "")[:300])
+
+
+def static_video_card(v):
+    vid = str(v.get("id") or "")
+    title = v.get("title") or "매물 영상"
+    cat = video_category(v)
+    published = str(v.get("published") or "")
+    m = re.match(r"(\d{4})-(\d{2})-(\d{2})", published)
+    when = f"{m.group(1)}. {int(m.group(2))}. {int(m.group(3))}." if m else ""
+    meta = " · ".join(x for x in (cat, when) if x)
+    watch = f"https://www.youtube.com/watch?v={quote(vid)}"
+    thumb = f"https://i.ytimg.com/vi/{quote(vid)}/hqdefault.jpg"
+    return (f'<article class="card video-listing" id="v{escape(vid)}">'
+            f'<a class="card-link" href="{watch}" target="_blank" rel="noopener" aria-label="{escape(title)} 영상 보기"></a>'
+            f'<div class="card-media"><img src="{thumb}" alt="" loading="lazy" decoding="async">'
+            f'<span class="yt-play" aria-hidden="true"></span></div>'
+            f'<div class="card-body"><p class="meta">{escape(meta)}</p>'
+            f'<h3>{escape(title)}</h3>'
+            f'<p class="card-actions"><a class="btn gold" href="{watch}" target="_blank" rel="noopener">영상 보기</a></p>'
+            f"</div></article>")
+
+
+def static_video_cards(videos):
+    return "".join(static_video_card(v) for v in videos)
+
+
+def static_blog(posts):
+    bits = []
+    for p in posts[:6]:
+        title, link = p.get("title") or "", p.get("link") or ""
+        if not title or not str(link).startswith("https://blog.naver.com/"):
+            continue
+        published = str(p.get("published") or "")
+        m = re.match(r"(\d{4})-(\d{2})-(\d{2})", published)
+        when = f"{m.group(1)}. {int(m.group(2))}. {int(m.group(3))}." if m else ""
+        meta = " · ".join(x for x in (p.get("category") or "", when) if x)
+        summary = f'<p>{escape(p["summary"])}</p>' if p.get("summary") else ""
+        bits.append(f'<a class="blog-card" href="{escape(link)}" target="_blank" rel="noopener">'
+                    f'<p class="when">{escape(meta)}</p><h3>{escape(title)}</h3>{summary}</a>')
+    return "".join(bits)
+
+
 def static_stats(listings, videos):
     """home.js 상단 현황과 같음 (0인 항목은 숨김)"""
     eups = len({(l.get("region") or {}).get("eupmyeon") for l in listings} - {None, ""})
@@ -861,13 +923,28 @@ def inject_static(out, site, listings=(), videos=()):
             html = html.replace("전화 010-3406-0071", "전화 " + escape(o.get("tel", "")))
         if f.name == "index.html":
             html = html.replace("<!--jsonld-->", f'<script type="application/ld+json">{ld_json(agent_ld(site))}</script>')
-            html = html.replace('<div class="cards" id="cards"></div>', f'<div class="cards" id="cards">{static_cards(listings)}</div>')
-            html = html.replace('<ul class="stats" id="stats" aria-label="현황"></ul>', f'<ul class="stats" id="stats" aria-label="현황">{static_stats(listings, videos)}</ul>')
-            types = {l.get("type") for l in listings}
-            html = re.sub(r'\n\s*<a href="#listings" data-quick="([^"]+)">[^<]*</a>', lambda m: m.group(0) if m.group(1) in types else "", html)
-            if not listings:
+            if listings:
+                cards_html = static_cards(listings)
+            elif videos:
+                cards_html = static_video_cards(videos)
+                html = html.replace('id="listHeading">매물', 'id="listHeading">매물 영상')
+                html = html.replace('id="videos"', 'id="videos" hidden', 1)
+                html = html.replace('id="listNote">종류를 누르세요. 전체, 토지, 전원주택, 농가주택.',
+                                    'id="listNote">등록된 매물 글이 없으면, 유튜브에 올린 현장 영상을 매물로 보여 드립니다.')
+            else:
+                cards_html = ""
                 html = html.replace('<div class="empty" id="emptyNone" hidden>', '<div class="empty" id="emptyNone">')
-                html = html.replace('<div class="sec-tools" id="listTools">', '<div class="sec-tools" id="listTools" hidden>')
+            html = html.replace('<div class="cards" id="cards"></div>', f'<div class="cards" id="cards">{cards_html}</div>')
+            html = html.replace('<ul class="stats" id="stats" aria-label="현황"></ul>', f'<ul class="stats" id="stats" aria-label="현황">{static_stats(listings, videos)}</ul>')
+            blog_path = out / "data" / "blog.json"
+            if blog_path.is_file():
+                try:
+                    posts = json.loads(blog_path.read_text(encoding="utf-8")).get("posts") or []
+                except (OSError, ValueError):
+                    posts = []
+                if posts:
+                    html = html.replace('<div class="blog-list" id="blogList"></div>',
+                                        f'<div class="blog-list" id="blogList">{static_blog(posts)}</div>')
         if base:
             path = "" if f.name == "index.html" else f.name
             html = html.replace("<!--head-->", f'<link rel="canonical" href="{escape(base)}/{path}">\n  <meta property="og:url" content="{escape(base)}/{path}">')

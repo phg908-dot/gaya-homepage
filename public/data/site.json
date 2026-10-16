@@ -36,6 +36,14 @@
   "naver": {
     "searchName": "양평 가야부동산"
   },
+  "blog": {
+    "url": "https://blog.naver.com/gayayangpyeong",
+    "rss": "https://rss.blog.naver.com/gayayangpyeong.xml"
+  },
+  "instagram": {
+    "handle": "honggyun8",
+    "url": "https://www.instagram.com/honggyun8/"
+  },
   "closedListingNos": [],
   "policy": {
     "directionBasis": "건물 정면 기준"

@@ -12,11 +12,13 @@ public/              ← 홈페이지 원본 (이 폴더 안의 data/*.json 만 
   data/site.json       사무소 정보·유튜브·지도 설정
   data/listings.json   매물 목록
   data/videos.json     유튜브 영상 목록 (자동 갱신 — 직접 고치지 마세요)
+  data/blog.json       네이버 블로그 최신 글 (자동 갱신 — 직접 고치지 마세요)
   admin/listing.html   매물 등록·수정 화면 (JSON을 직접 고치지 않아도 됨, 검색 노출 안 됨)
   admin/youtube.html   유튜브 설명란 문구 생성기 (검색 노출 안 됨)
   images/              사진·아이콘·공유 미리보기(og.png)
 scripts/
   update_videos.py     유튜브 새 영상 수집 (매시간 자동 실행)
+  update_blog.py       네이버 블로그 새 글 수집 (같은 시간에 자동 실행)
   build.py             매물 상세 페이지·사이트맵 생성 + 광고 명시사항 점검
 .github/workflows/site.yml   자동화 (영상 수집 → 커밋 → (선택) 배포)
 ```
@@ -44,7 +46,7 @@ scripts/
 3. Save and Deploy. 이후 커밋(영상 자동 갱신 포함)마다 자동으로 다시 배포됩니다.
 
 **GitHub Pages** (기본 설정 — 따로 할 일 없음)
-1. 저장소가 Public 이면, `main` 에 올릴 때마다 자동화가 배포본을 `gh-pages` 브랜치에 올립니다.
+1. 저장소가 Public 이면, `main` 에 올릴 때마다 자동화가 배포본을 `gh-pages` 브랜치에 올리고, 유튜브·블로그 목록이 바뀌면 `main` 에도 커밋합니다. 커밋이 거부되면 Settings → Actions → General → Workflow permissions → **Read and write permissions** 를 선택하고 저장하세요.
 2. Pages가 자동으로 켜지지 않았다면 Settings → Pages → Build and deployment → *Deploy from a branch* → `gh-pages` / `(root)` → Save (한 번만).
 3. 주소: `https://아이디.github.io/저장소이름/` → `site.json` 의 `"siteUrl"` 에 넣으면 사이트맵·공유 미리보기가 완성됩니다.
 4. Cloudflare Pages 로 옮길 때는 저장소 변수 `HOSTING` = `cloudflare` 로 이 배포를 끕니다.
@@ -75,6 +77,11 @@ scripts/
   console.cloud.google.com → 프로젝트 만들기 → API 및 서비스 → 라이브러리 → *YouTube Data API v3* 사용 →
   사용자 인증 정보 → API 키 만들기(키 제한: YouTube Data API v3) →
   GitHub 저장소 Settings → Secrets and variables → Actions → New repository secret → 이름 `YT_API_KEY`
+
+### 1-4-1. 네이버 블로그 · 인스타그램
+- 블로그 주소는 `site.json` 의 `blog.url`, 글 목록은 `blog.rss` 입니다. 기본값은 `https://blog.naver.com/gayayangpyeong` 과 `https://rss.blog.naver.com/gayayangpyeong.xml` 입니다.
+- 매시간 자동화가 RSS를 읽어 `public/data/blog.json` 에 최신 글 12개를 저장합니다. 홈페이지 "블로그 소식"이 이 파일을 읽습니다. 글이 그대로면 파일을 다시 쓰지 않습니다.
+- 인스타그램은 `site.json` 의 `instagram.url` (기본 `@honggyun8`) 로 연결만 합니다. 글 내용을 끌어오지는 않습니다.
 
 ### 1-5. 지도 (선택 — 없으면 지도 영역만 숨겨집니다)
 매물에 좌표(`lat`, `lng`)가 있어야 지도에 표시됩니다. 카카오맵 키가 있으면 카카오맵을, 없으면 네이버 지도를 씁니다.

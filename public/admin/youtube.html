@@ -8,9 +8,10 @@
   <link rel="icon" href="../images/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../assets/css/style.css">
   <style>
-    .tool { display: grid; gap: 16px; max-width: 820px; }
-    .tool textarea { width: 100%; min-height: 420px; font: 14px/1.6 ui-monospace, Menlo, Consolas, monospace; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
-    .tool .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .tool { display: grid; gap: 16px; max-width: 820px; min-width: 0; }
+    .tool textarea { width: 100%; max-width: 100%; min-height: 420px; font: 14px/1.6 ui-monospace, Menlo, Consolas, monospace; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .tool .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; min-width: 0; max-width: 100%; }
+    .tool .row select { flex: 1 1 160px; min-width: 0; width: min(100%, 28rem); max-width: 100%; }
     .warn { background: #fff4e5; color: #7a4a00; border-radius: 10px; padding: 10px 14px; font-size: 14px; margin: 0; }
   </style>
 </head>

@@ -137,6 +137,24 @@ class Normalize(unittest.TestCase):
         self.assertTrue(build.is_listing_video({"id": "b" * 11, "title": "막걸리"}, force_in={"b" * 11}))
         self.assertFalse(build.is_listing_video({"id": "c" * 11, "title": yes[0]}, force_out={"c" * 11}))
 
+    def test_video_category_uses_title_not_hashtag(self):
+        # 해시태그의 전원주택, 설명의 대지는 종류를 바꾸지 않는다. 전원주택지는 땅이다.
+        cases = [
+            ("전기 많이 써도 월 약 5천 원? 양평 용문 전원주택 2,538㎡(768평)",
+             "대지 660㎡(200평)와 농지 1,878㎡", "전원주택"),
+            ("지평 시내 대지 1억2천! 양평군 지평면 토지 330㎡(100평) #양평토지 #양평전원주택",
+             "", "토지"),
+            ("개울 옆 양평 지평 전원주택지 1,855㎡(562평) 2억3천 #양평토지",
+             "", "토지"),
+            ("양평 전원주택 3억대 | 잔디마당 남향 2층 단독주택 | 대지228평 건평53평",
+             "", "전원주택"),
+            ("양평 지평면 농가주택 매매", "", "농가주택"),
+            ("(급매)양평 임야에 접한 숲세권 양평전원주택지 매매", "", "토지"),
+        ]
+        for title, desc, want in cases:
+            got = build.video_category({"title": title, "description": desc})
+            self.assertEqual(got, want, title)
+
     def test_jsonld_cannot_break_out_of_script(self):
         out = build.ld_json({"name": "<!--<script></script>&"})
         self.assertNotIn("<", out)
@@ -215,19 +233,25 @@ class Build(unittest.TestCase):
             self.assertLess(html.index('id="l6101"'), html.index('id="l6102"'), "급매가 먼저 (home.js 정렬과 같음)")
             self.assertIn('<h3><a href="listing/6102.html">&lt;b&gt;둘째&lt;/b&gt;</a></h3>', html)
             self.assertIn("<li><b>2</b><span>거래 가능 매물</span></li>", html)
-            self.assertIn('data-quick="토지"', html)
-            self.assertNotIn('data-quick="상가"', html)
+            self.assertIn('data-type="토지"', html)
+            self.assertIn('data-type="전원주택"', html)
+            self.assertIn('data-type="농가주택"', html)
+            self.assertNotIn('data-type="상가"', html)
+            self.assertIn('id="listHeading">매물</span>', html)
             self.assertNotIn("비밀-9", html)
             o = json.loads((SITE / "public/data/site.json").read_text())["office"]
             self.assertIn(f'<dd data-office="address">{o["address"]}', html)
             self.assertIn('<div class="empty" id="emptyNone" hidden>', html)
+            self.assertIn("양평 지평 부동산", html)
             self.assertIn("양평 가야부동산", html)
-            # 매물이 하나도 없으면 안내 문구를 처음부터 보여준다
+            # 매물 글이 없으면 현장 영상을 매물 자리에 넣고, 0건 빈 목록은 만들지 않는다
             (Path(tmp) / "public/data/listings.json").write_text("[]")
             subprocess.run([sys.executable, "scripts/build.py", "--prod"], cwd=tmp, capture_output=True, text=True)
             html = (Path(tmp) / "dist/index.html").read_text(encoding="utf-8")
-            self.assertIn('<div class="empty" id="emptyNone">', html)
-            self.assertNotIn("data-quick=", html)
+            self.assertIn('id="listHeading">매물 영상', html)
+            self.assertIn("youtube.com/watch", html)
+            self.assertIn('id="emptyNone" hidden', html)
+            self.assertNotIn(">0건<", html)
 
     def test_site_url_and_photo_paths(self):
         self.assertIsNone(build.site_url_problem({"siteUrl": "https://a.github.io/repo"}))
@@ -377,6 +401,33 @@ class Videos(unittest.TestCase):
 
     def test_real_network_failure_does_not_raise(self):
         self.assertEqual(uv.http("http://127.0.0.1:9/", timeout=2)[0], 0)
+
+
+class Blog(unittest.TestCase):
+    def test_parse_rss_strips_html_and_query(self):
+        ub = load("update_blog")
+        raw = """<?xml version="1.0"?><rss version="2.0"><channel>
+          <item>
+            <title><![CDATA[양평 지평 토지 이야기]]></title>
+            <link><![CDATA[https://blog.naver.com/gayayangpyeong/224429812285?fromRss=true&trackingCode=rss]]></link>
+            <guid>https://blog.naver.com/gayayangpyeong/224429812285</guid>
+            <category><![CDATA[지평·양평 매물]]></category>
+            <description><![CDATA[현장에 가 봤습니다. <img src="https://example.com/a.jpg" /> 길이 좋습니다.]]></description>
+            <pubDate>Thu, 15 Oct 2026 07:00:00 +0900</pubDate>
+          </item>
+          <item>
+            <title>같은 글</title>
+            <link>https://blog.naver.com/gayayangpyeong/224429812285?fromRss=true</link>
+            <pubDate>Thu, 15 Oct 2026 07:00:00 +0900</pubDate>
+          </item>
+        </channel></rss>""".encode()
+        posts = ub.parse_rss(raw)
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(posts[0]["link"], "https://blog.naver.com/gayayangpyeong/224429812285")
+        self.assertEqual(posts[0]["published"], "2026-10-15")
+        self.assertNotIn("<", posts[0]["summary"])
+        self.assertIn("현장에 가 봤습니다", posts[0]["summary"])
+        self.assertEqual(posts[0]["category"], "지평·양평 매물")
 
 
 if __name__ == "__main__":
