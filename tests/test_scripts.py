@@ -227,6 +227,37 @@ class Videos(unittest.TestCase):
         self.assertEqual((keep["title"], keep["description"]), ("T2", ""), "피드의 빈 설명도 반영")
         self.assertIsNone(out["videos"][0]["isShort"], "판단 불가는 None 으로 남겨 다음에 재시도")
 
+    def test_channel_page_fallback_when_rss_404(self):
+        vids_page = {"contents": {"tabs": [{"richGridRenderer": {"contents": [
+            {"richItemRenderer": {"content": {"videoRenderer": {"videoId": "AAAAAAAAAA1", "title": {"runs": [{"text": "지평면 전원주택 매물번호 1001"}]}}}}},
+            {"richItemRenderer": {"content": {"videoRenderer": {"videoId": "KEEPvideo01", "title": {"runs": [{"text": "새 제목"}]}}}}}]}}]}}
+        shorts_page = {"contents": [{"shortsLockupViewModel": {"entityId": "shorts-shelf-item-SSSSSSSSSS1",
+            "onTap": {"innertubeCommand": {"reelWatchEndpoint": {"videoId": "SSSSSSSSSS1"}}},
+            "overlayMetadata": {"primaryText": {"content": "토지 쇼츠"}}}}]}
+        page = lambda d: ("<html><script>var ytInitialData = " + json.dumps(d, ensure_ascii=False) + ";</script></html>").encode()
+        watch = b'<html>"publishDate":"2026-10-15T09:00:00-07:00" "shortDescription":"\\ub9e4\\ubb3c\\ubc88\\ud638 1001\\n\\uc124\\uba85"</html>'
+
+        def fake(url, follow=True, timeout=20):
+            if "feeds/videos.xml" in url:
+                return 404, b""
+            if url.endswith("/videos?hl=ko&gl=KR"):
+                return 200, page(vids_page)
+            if url.endswith("/shorts?hl=ko&gl=KR"):
+                return 200, page(shorts_page)
+            if "/watch?v=" in url:
+                return 200, watch
+            if "oembed" in url:
+                return (404, b"") if "GONE" in url else (200, b'{"title": "x"}')
+            raise AssertionError(url)
+        uv.http = fake
+        self.assertEqual(uv.main(), 0)
+        out = {v["id"]: v for v in json.loads(uv.OUT.read_text())["videos"]}
+        self.assertEqual(set(out), {"AAAAAAAAAA1", "KEEPvideo01", "SSSSSSSSSS1"})
+        self.assertTrue(out["SSSSSSSSSS1"]["isShort"])
+        self.assertFalse(out["AAAAAAAAAA1"]["isShort"])
+        self.assertEqual(out["AAAAAAAAAA1"]["published"], "2026-10-15T09:00:00-07:00")
+        self.assertIn("매물번호 1001", out["AAAAAAAAAA1"]["description"])
+
     def test_real_network_failure_does_not_raise(self):
         self.assertEqual(uv.http("http://127.0.0.1:9/", timeout=2)[0], 0)
 

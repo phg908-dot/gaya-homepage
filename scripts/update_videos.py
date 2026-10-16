@@ -49,6 +49,7 @@ CHANNEL_ID_RE = [
     re.compile(r'"browseId"\s*:\s*"(UC[0-9A-Za-z_-]{22})"'),
 ]
 DESC_MAX = 2000
+YT_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -109,6 +110,80 @@ def fetch_rss(channel_id: str) -> list[dict]:
             "description": desc[:DESC_MAX],
         })
     return items
+
+
+YT_INITIAL = re.compile(r"(?:var ytInitialData|window\[\"ytInitialData\"\])\s*=\s*(\{.*?\});\s*</script>", re.S)
+
+
+def _text(node) -> str:
+    if not isinstance(node, dict):
+        return ""
+    if "simpleText" in node:
+        return node["simpleText"]
+    if "runs" in node:
+        return "".join(r.get("text", "") for r in node["runs"])
+    return node.get("content", "")
+
+
+def _walk(node, out: list, short: bool) -> None:
+    """ytInitialData 안의 영상 카드(videoRenderer · reelItemRenderer · shortsLockupViewModel)를 모은다"""
+    if isinstance(node, dict):
+        vr = node.get("videoRenderer") or node.get("gridVideoRenderer")
+        if isinstance(vr, dict) and vr.get("videoId"):
+            out.append({"id": vr["videoId"], "title": _text(vr.get("title")), "isShort": short})
+        rr = node.get("reelItemRenderer")
+        if isinstance(rr, dict) and rr.get("videoId"):
+            out.append({"id": rr["videoId"], "title": _text(rr.get("headline")), "isShort": True})
+        sl = node.get("shortsLockupViewModel")
+        if isinstance(sl, dict):
+            vid = (((sl.get("onTap") or {}).get("innertubeCommand") or {}).get("reelWatchEndpoint") or {}).get("videoId")
+            if not vid:
+                m = re.search(r"([A-Za-z0-9_-]{11})$", str(sl.get("entityId", "")))
+                vid = m.group(1) if m else None
+            if vid:
+                out.append({"id": vid, "title": _text((sl.get("overlayMetadata") or {}).get("primaryText")), "isShort": True})
+        for v in node.values():
+            _walk(v, out, short)
+    elif isinstance(node, list):
+        for v in node:
+            _walk(v, out, short)
+
+
+def fetch_channel_pages(channel_id: str) -> list[dict]:
+    """RSS가 안 될 때: 채널의 '동영상'·'쇼츠' 탭 페이지에서 영상 목록을 읽는다 (최근 약 30개씩)"""
+    found, seen = [], set()
+    for tab, short in (("videos", False), ("shorts", True)):
+        status, body = http(f"https://www.youtube.com/channel/{channel_id}/{tab}?hl=ko&gl=KR")
+        m = YT_INITIAL.search(body.decode("utf-8", "replace")) if status == 200 else None
+        if not m:
+            note(f"채널 '{tab}' 탭에서 영상 목록을 읽지 못함 (응답 {status})")
+            continue
+        items: list = []
+        _walk(json.loads(m.group(1)), items, short)
+        for it in items:
+            if YT_ID_RE.match(it["id"]) and it["id"] not in seen:
+                seen.add(it["id"])
+                found.append(it)
+    return found
+
+
+def fetch_watch_details(vid: str) -> dict:
+    """영상 페이지에서 게시일·설명란을 읽는다 (설명란의 매물번호로 매물과 연결하기 위해)"""
+    status, body = http(f"https://www.youtube.com/watch?v={vid}&hl=ko")
+    if status != 200:
+        return {}
+    t = body.decode("utf-8", "replace")
+    out = {}
+    m = re.search(r'"publishDate":"([^"]+)"', t) or re.search(r'itemprop="datePublished" content="([^"]+)"', t) or re.search(r'"uploadDate":"([^"]+)"', t)
+    if m:
+        out["published"] = m.group(1)
+    m = re.search(r'"shortDescription":"((?:[^"\\]|\\.)*)"', t)
+    if m:
+        try:
+            out["description"] = json.loads('"' + m.group(1) + '"')[:DESC_MAX]
+        except ValueError:
+            pass
+    return out
 
 
 def fetch_api_all(channel_id: str, key: str) -> list[dict]:
@@ -190,7 +265,19 @@ def main() -> int:
             return 1
         print(f"채널 ID 확인: {channel_id}")
 
-    fresh = fetch_rss(channel_id)
+    try:
+        fresh = fetch_rss(channel_id)
+    except RuntimeError as exc:
+        # RSS가 막혔을 때(2025-12 이후 간헐적 404 보고) 채널 페이지에서 읽고, 새 영상만 상세 정보를 가져온다
+        note(f"{exc} → 채널 페이지에서 영상 목록을 읽습니다")
+        fresh = fetch_channel_pages(channel_id)
+        known = {v["id"]: v for v in old.get("videos", []) if isinstance(v, dict)}
+        for v in fresh:
+            if v["id"] not in known or not known[v["id"]].get("published"):
+                v.update(fetch_watch_details(v["id"]))
+                time.sleep(0.3)
+        if not fresh and not old.get("videos"):
+            note("채널에서 공개 영상을 찾지 못했습니다 (아직 공개 영상이 없거나 유튜브가 응답을 막았습니다)")
     api_key = os.environ.get("YT_API_KEY", "").strip()
     if api_key:
         try:
@@ -240,7 +327,7 @@ def main() -> int:
     out = {"channelId": channel_id, "updated": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "videos": videos}
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     added = len(set(by_id) - {v["id"] for v in old.get("videos", [])})
-    print(f"갱신: 총 {len(videos)}개 (신규 {added}, 제거 {len(removed)})")
+    print(("::notice::" if GHA else "") + f"영상 목록 갱신: 총 {len(videos)}개 (신규 {added}, 제거 {len(removed)})")
     return 0
 
 
