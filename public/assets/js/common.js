@@ -21,10 +21,11 @@
 
   // 각 파일을 따로 불러와 하나가 실패해도 나머지는 동작 (site.json 은 필수)
   async function loadData() {
-    const [site, listings, videos] = await Promise.all([
+    const [site, listings, videos, blog] = await Promise.all([
       getJSON("data/site.json"),
       getJSON("data/listings.json").catch((e) => { console.error(e); return null; }),
       getJSON("data/videos.json").catch(() => null),
+      getJSON("data/blog.json").catch(() => null),
     ]);
     const hidden = new Set(asList(site.hiddenVideos).map(ytId).filter(Boolean));
     if (site.policy && site.policy.directionBasis) directionBasis = String(site.policy.directionBasis);
@@ -53,7 +54,8 @@
       return citedNumbers(v).every((n) => !closed.has(n) && !excludedNos.has(n));
     });
     linkVideos(live, vids);
-    return { site, listings: live, videos: vids, failed: !Array.isArray(listings) };
+    const posts = blog && Array.isArray(blog.posts) ? blog.posts.filter((p) => p && p.title && /^https:\/\/blog\.naver\.com\//.test(String(p.link || ""))) : [];
+    return { site, listings: live, videos: vids, blog: { posts }, failed: !Array.isArray(listings) };
   }
 
   // 영상 ↔ 매물 연결: listings[].videoIds + 영상 제목/설명의 "No.1234", "매물번호 1234, 1235"
@@ -388,6 +390,15 @@
     document.querySelectorAll("[data-youtube]").forEach((n) => {
       if (!h) { n.hidden = true; return; }
       n.href = "https://www.youtube.com/" + (h.startsWith("@") ? h : "@" + h);
+    });
+    const blogUrl = String((site.blog && site.blog.url) || "").trim();
+    document.querySelectorAll("[data-blog]").forEach((n) => {
+      if (blogUrl) n.href = blogUrl;
+    });
+    const ig = String((site.instagram && (site.instagram.url || site.instagram.handle)) || "").trim();
+    document.querySelectorAll("[data-instagram]").forEach((n) => {
+      if (!ig) return;
+      n.href = ig.startsWith("http") ? ig : "https://www.instagram.com/" + ig.replace(/^@/, "") + "/";
     });
     const y = document.getElementById("year");
     if (y) y.textContent = new Date().getFullYear();

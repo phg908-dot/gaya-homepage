@@ -7,16 +7,18 @@
 public/              ← 홈페이지 원본 (이 폴더 안의 data/*.json 만 고치면 됩니다)
   index.html           메인 (매물 검색·필터·지도·최신 영상)
   videos.html          영상 모음 (일반/쇼츠/매물 연결)
-  sell.html            매물 접수 (내용을 문자로 보내는 방식 — 개인정보를 저장하지 않음)
+  sell.html            내 매물 맡기기 (전화·문자 버튼만 — 양식 없음, 개인정보를 저장하지 않음)
   about.html           사무소 소개·대표 인사말·자주 묻는 질문 (인사말 문구는 이 파일에서 직접 수정)
   data/site.json       사무소 정보·유튜브·지도 설정
   data/listings.json   매물 목록
   data/videos.json     유튜브 영상 목록 (자동 갱신 — 직접 고치지 마세요)
+  data/blog.json       네이버 블로그 최신 글 (자동 갱신 — 직접 고치지 마세요)
   admin/listing.html   매물 등록·수정 화면 (JSON을 직접 고치지 않아도 됨, 검색 노출 안 됨)
   admin/youtube.html   유튜브 설명란 문구 생성기 (검색 노출 안 됨)
   images/              사진·아이콘·공유 미리보기(og.png)
 scripts/
   update_videos.py     유튜브 새 영상 수집 (매시간 자동 실행)
+  update_blog.py       네이버 블로그 새 글 수집 (같은 시간에 자동 실행)
   build.py             매물 상세 페이지·사이트맵 생성 + 광고 명시사항 점검
 .github/workflows/site.yml   자동화 (영상 수집 → 커밋 → (선택) 배포)
 ```
@@ -44,7 +46,7 @@ scripts/
 3. Save and Deploy. 이후 커밋(영상 자동 갱신 포함)마다 자동으로 다시 배포됩니다.
 
 **GitHub Pages** (기본 설정 — 따로 할 일 없음)
-1. 저장소가 Public 이면, `main` 에 올릴 때마다 자동화가 배포본을 `gh-pages` 브랜치에 올립니다.
+1. 저장소가 Public 이면, `main` 에 올릴 때마다 자동화가 배포본을 `gh-pages` 브랜치에 올리고, 유튜브·블로그 목록이 바뀌면 `main` 에도 커밋합니다. 커밋이 거부되면 Settings → Actions → General → Workflow permissions → **Read and write permissions** 를 선택하고 저장하세요.
 2. Pages가 자동으로 켜지지 않았다면 Settings → Pages → Build and deployment → *Deploy from a branch* → `gh-pages` / `(root)` → Save (한 번만).
 3. 주소: `https://아이디.github.io/저장소이름/` → `site.json` 의 `"siteUrl"` 에 넣으면 사이트맵·공유 미리보기가 완성됩니다.
 4. Cloudflare Pages 로 옮길 때는 저장소 변수 `HOSTING` = `cloudflare` 로 이 배포를 끕니다.
@@ -75,6 +77,11 @@ scripts/
   console.cloud.google.com → 프로젝트 만들기 → API 및 서비스 → 라이브러리 → *YouTube Data API v3* 사용 →
   사용자 인증 정보 → API 키 만들기(키 제한: YouTube Data API v3) →
   GitHub 저장소 Settings → Secrets and variables → Actions → New repository secret → 이름 `YT_API_KEY`
+
+### 1-4-1. 네이버 블로그 · 인스타그램
+- 블로그 주소는 `site.json` 의 `blog.url`, 글 목록은 `blog.rss` 입니다. 기본값은 `https://blog.naver.com/gayayangpyeong` 과 `https://rss.blog.naver.com/gayayangpyeong.xml` 입니다.
+- 매시간 자동화가 RSS를 읽어 `public/data/blog.json` 에 최신 글 12개를 저장합니다. 홈페이지 "블로그 소식"이 이 파일을 읽습니다. 글이 그대로면 파일을 다시 쓰지 않습니다.
+- 인스타그램은 `site.json` 의 `instagram.url` (기본 `@honggyun8`) 로 연결만 합니다. 글 내용을 끌어오지는 않습니다.
 
 ### 1-5. 지도 (선택 — 없으면 지도 영역만 숨겨집니다)
 매물에 좌표(`lat`, `lng`)가 있어야 지도에 표시됩니다. 카카오맵 키가 있으면 카카오맵을, 없으면 네이버 지도를 씁니다.
@@ -137,7 +144,7 @@ scripts/
   "featured": true,                 // 추천 배지
   "urgent": false,                  // 급매 배지
   "title": "지평면 남향 전원주택 · 대지 170평",
-  "type": "전원주택",                // 토지, 임야, 전원주택, 농가주택, 상가, 공장·창고 …
+  "type": "전원주택",                // 토지, 임야, 전원주택, 단독주택, 상가, 공장·창고 …
   "deal": "매매",                    // 매매, 전세, 월세, 단기임대
   "price": 32000,                   // 만원 단위. 매매가 (전세는 deposit, 월세는 deposit+monthly)
   "deposit": null, "monthly": null,

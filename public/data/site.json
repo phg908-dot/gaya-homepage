@@ -10,7 +10,7 @@
     "email": "",
     "kakaoChannel": "",
     "hours": "",
-    "intro": "양평 지평면 지평역 사거리에 있는 공인중개사사무소입니다. 토지·전원주택·농가주택을 중심으로, 매물은 현장을 직접 확인하고 가능한 매물은 유튜브 영상으로도 소개합니다.",
+    "intro": "양평 지평면 지평역 사거리에 있는 공인중개사사무소입니다. 주택·토지·전·월세를 중심으로, 매물은 현장을 직접 확인하고 가능한 매물은 유튜브 영상으로도 소개합니다.",
     "lat": null,
     "lng": null,
     "addressNote": "지평역 사거리"
@@ -35,6 +35,14 @@
   },
   "naver": {
     "searchName": "양평 가야부동산"
+  },
+  "blog": {
+    "url": "https://blog.naver.com/gayayangpyeong",
+    "rss": "https://rss.blog.naver.com/gayayangpyeong.xml"
+  },
+  "instagram": {
+    "handle": "honggyun8",
+    "url": "https://www.instagram.com/honggyun8/"
   },
   "closedListingNos": [],
   "policy": {
