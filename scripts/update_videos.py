@@ -33,7 +33,16 @@ NS = {
     "yt": "http://www.youtube.com/xml/schemas/2015",
     "media": "http://search.yahoo.com/mrss/",
 }
+GHA = bool(os.environ.get("GITHUB_ACTIONS"))
+
+
+def note(msg: str) -> None:
+    """GitHub Actions 화면에 경고로 보이도록 출력 (로컬에서는 일반 출력)"""
+    print(("::warning::" if GHA else "") + msg, file=sys.stderr)
+
+
 CHANNEL_ID_RE = [
+    re.compile(r'<meta property="og:url" content="https://www\.youtube\.com/channel/(UC[0-9A-Za-z_-]{22})"'),
     re.compile(r'"externalId"\s*:\s*"(UC[0-9A-Za-z_-]{22})"'),
     re.compile(r'<link rel="canonical" href="https://www\.youtube\.com/channel/(UC[0-9A-Za-z_-]{22})"'),
     re.compile(r'<meta itemprop="(?:identifier|channelId)" content="(UC[0-9A-Za-z_-]{22})"'),
@@ -61,16 +70,16 @@ def http(url: str, *, follow: bool = True, timeout: int = 20) -> tuple[int, byte
 
 def resolve_channel_id(handle: str) -> str | None:
     handle = handle if handle.startswith("@") else "@" + handle
-    url = "https://www.youtube.com/" + urllib.parse.quote(handle, safe="@")
-    status, body = http(url)
-    if status != 200:
-        print(f"채널 페이지 응답 {status}: {url}", file=sys.stderr)
-        return None
-    text = body.decode("utf-8", "replace")
-    for rx in CHANNEL_ID_RE:
-        m = rx.search(text)
-        if m:
-            return m.group(1)
+    base = "https://www.youtube.com/" + urllib.parse.quote(handle, safe="@")
+    for url in (base, base + "/videos", base + "/about?hl=ko"):
+        status, body = http(url)
+        text = body.decode("utf-8", "replace")
+        for rx in CHANNEL_ID_RE:
+            m = rx.search(text)
+            if m:
+                return m.group(1)
+        hint = "동의(consent) 페이지" if "consent.youtube.com" in text or "before you continue" in text.lower() else f"{len(text)}자"
+        note(f"채널 ID를 찾지 못함: {url} → 응답 {status}, {hint}")
     return None
 
 
@@ -84,7 +93,7 @@ def fetch_rss(channel_id: str) -> list[dict]:
         if status == 200:
             break
     if status != 200:
-        raise RuntimeError(f"RSS 응답 {status}")
+        raise RuntimeError(f"유튜브 RSS 응답 {status} (채널 ID {channel_id})")
     root = ET.fromstring(body)
     items = []
     for e in root.findall("a:entry", NS):
@@ -177,7 +186,7 @@ def main() -> int:
     if not channel_id:
         channel_id = resolve_channel_id(yt.get("handle", "")) or ""
         if not channel_id:
-            print("채널 ID를 찾지 못했습니다. data/site.json 의 youtube.channelId 에 UC로 시작하는 ID를 넣어주세요.", file=sys.stderr)
+            note("채널 ID를 찾지 못했습니다. data/site.json 의 youtube.channelId 에 UC로 시작하는 ID를 넣어주세요.")
             return 1
         print(f"채널 ID 확인: {channel_id}")
 
@@ -236,4 +245,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception as exc:  # 실패 이유를 Actions 화면에 남김
+        note(f"영상 수집 실패: {exc}")
+        sys.exit(1)
