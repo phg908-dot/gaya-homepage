@@ -48,7 +48,7 @@ CHANNEL_ID_RE = [
     re.compile(r'<meta itemprop="(?:identifier|channelId)" content="(UC[0-9A-Za-z_-]{22})"'),
     re.compile(r'"browseId"\s*:\s*"(UC[0-9A-Za-z_-]{22})"'),
 ]
-DESC_MAX = 2000
+DESC_MAX = 5000  # 유튜브 설명란 최대 길이 (뒤쪽 사무소 정보·확인사항까지 보존)
 YT_ID_RE = re.compile(r"^[A-Za-z0-9_-]{11}$")
 
 
