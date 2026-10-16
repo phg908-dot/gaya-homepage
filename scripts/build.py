@@ -525,12 +525,12 @@ def rows(l):
 
 
 def seo_title(l, o):
-    """검색 결과용 제목: 지역 + 종류 + 거래 + 면적 + 가격 | 상호"""
+    """검색 결과용 제목: 지역 + 종류 + 거래 + 가격 + 면적 (검색 결과에서 잘리면 덜 중요한 면적부터 잘리도록)"""
     r = l.get("region") or {}
     where = " ".join(x for x in [(r.get("sigungu") or "").removesuffix("군").removesuffix("시"), r.get("eupmyeon"), r.get("ri")] if x)
     land_a, bld_a = (l.get("land") or {}).get("area"), (l.get("building") or {}).get("area")
     size = f" 대지 {area_text(land_a)}" if land_a and bld_a else f" {area_text(land_a)}" if land_a else f" 전용 {area_text(bld_a)}" if bld_a else ""
-    return f"{where} {l.get('type', '')} {l.get('deal', '')}{size} {price_text(l)} | No.{l['no']} {o.get('name', '')}".strip()
+    return f"{where} {l.get('type', '')} {l.get('deal', '')} {price_text(l)}{size}".strip()
 
 
 ICON = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 11.5 12 4l9 7.5V20h-6v-5H9v5H3z" fill="currentColor"/></svg>'
@@ -591,12 +591,25 @@ def ld_json(obj):
     return json.dumps(obj, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
 
+def intl_tel(tel):
+    t = (tel or "").strip()
+    return "+82-" + t[1:] if re.fullmatch(r"0\d{1,2}-\d{3,4}-\d{4}", t) else (t or None)
+
+
+def postal_address(addr):
+    parts = (addr or "").split()
+    ld = {"@type": "PostalAddress", "streetAddress": addr, "addressCountry": "KR"}
+    if len(parts) >= 3 and re.search(r"(도|특별시|광역시|특별자치시)$", parts[0]) and re.search(r"(시|군|구)$", parts[1]):
+        ld.update(addressRegion=parts[0], addressLocality=parts[1], streetAddress=" ".join(parts[2:]))
+    return ld
+
+
 def agent_ld(site):
     o = site["office"]
     base = (site.get("siteUrl") or "").rstrip("/")
     ld = {"@context": "https://schema.org", "@type": "RealEstateAgent", "name": o.get("name"),
-          "telephone": o.get("tel"), "url": base + "/" if base else None,
-          "address": {"@type": "PostalAddress", "streetAddress": o.get("address"), "addressCountry": "KR"} if o.get("address") else None,
+          "telephone": intl_tel(o.get("tel")), "url": base + "/" if base else None,
+          "address": postal_address(o.get("address")) if o.get("address") else None,
           "image": base + "/images/og.png" if base else None,
           "sameAs": [youtube_url(site)] if youtube_url(site) else None}
     # 검색에서 쓰는 이름(양평 가야부동산 등)은 등록 상호와 함께 별칭으로만 (상호를 대신하지 않음)
@@ -646,9 +659,9 @@ def page(l, site, videos_by_id):
     ])
     listing_ld = {
         "@context": "https://schema.org", "@type": "RealEstateListing", "name": l["title"], "description": desc,
-        "url": url or None, "datePosted": l.get("updated"), "image": img or None,
+        "url": url or None, "dateModified": l.get("updated"), "image": img or None,
         "offers": {"@type": "Offer", "priceCurrency": "KRW", "price": int((l.get("price") if l.get("price") is not None else l.get("deposit")) * 10000),
-                   "seller": {"@type": "RealEstateAgent", "name": o.get("name"), "telephone": tel}}
+                   "seller": {"@type": "RealEstateAgent", "name": o.get("name"), "telephone": intl_tel(tel)}}
         if l.get("deal") in ("매매", "전세") and (l.get("price") is not None or l.get("deposit") is not None) else None,
     }
     crumbs_ld = {"@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": [
@@ -1007,6 +1020,7 @@ def main():
     hidden = site.get("hiddenVideos") or []
     hidden = {yt_id(x) for x in ([hidden] if isinstance(hidden, str) else hidden)} - {None}
     link_videos(listings, videos, hidden)
+    all_listings = listings
 
     for w in warns + check(site, listings):
         print(WARN + w)
@@ -1087,14 +1101,17 @@ def main():
 
     base = (site.get("siteUrl") or "").rstrip("/")
     if base:
-        today = date.today().isoformat()
-        valid = lambda d: d if re.match(r"^\d{4}-\d{2}-\d{2}$", str(d or "")) else today
-        newest = max([valid(l.get("updated")) for l in listings] or [today])
-        urls = [(f"{base}/", newest), (f"{base}/videos.html", today), (f"{base}/sell.html", None), (f"{base}/about.html", None)] + \
-               [(f"{base}/listing/{l['no']}.html", valid(l.get("updated"))) for l in listings]
+        # lastmod 는 데이터에 있는 날짜로만 (빌드 날짜를 쓰면 매일 '변경됨'이 되어 신뢰도가 떨어짐). 모르면 생략
+        day = lambda d: str(d)[:10] if re.match(r"^\d{4}-\d{2}-\d{2}", str(d or "")) else None
+        vday = {v["id"]: day(v.get("published")) for v in videos}
+        lm = lambda l: max([d for d in [day(l.get("updated"))] + [vday.get(i) for i in l.get("videoIds") or []] if d], default=None)
+        vupd = day(vdata.get("updated")) if isinstance(vdata, dict) else None
+        home = max([d for d in [lm(l) for l in all_listings if not l.get("sample")] + [vupd] if d], default=None)
+        urls = [(f"{base}/", home), (f"{base}/videos.html", vupd), (f"{base}/sell.html", None), (f"{base}/about.html", None)] + \
+               [(f"{base}/listing/{l['no']}.html", lm(l)) for l in listings]
         sm = "".join(f"<url><loc>{escape(u)}</loc>" + (f"<lastmod>{m}</lastmod>" if m else "") + "</url>" for u, m in urls)
         (out / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{sm}</urlset>\n', encoding="utf-8")
-    (out / "robots.txt").write_text("User-agent: *\nAllow: /\nDisallow: /admin/\n" + (f"Sitemap: {base}/sitemap.xml\n" if base else ""), encoding="utf-8")
+    (out / "robots.txt").write_text("User-agent: *\nAllow: /\n" + (f"Sitemap: {base}/sitemap.xml\n" if base else ""), encoding="utf-8")
     print(f"{'배포용(dist/)' if prod else '미리보기용(public/)'} 상세 페이지 {len(listings)}개 생성")
     return 0
 
