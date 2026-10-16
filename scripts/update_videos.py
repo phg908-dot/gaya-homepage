@@ -57,8 +57,9 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
-def http(url: str, *, follow: bool = True, timeout: int = 20) -> tuple[int, bytes]:
-    req = urllib.request.Request(url, headers=HEADERS)
+def http(url: str, *, follow: bool = True, timeout: int = 20, data: bytes | None = None) -> tuple[int, bytes]:
+    headers = dict(HEADERS, **({"Content-Type": "application/json"} if data else {}))
+    req = urllib.request.Request(url, headers=headers, data=data)
     opener = urllib.request.build_opener() if follow else urllib.request.build_opener(NoRedirect)
     try:
         with opener.open(req, timeout=timeout) as r:
@@ -153,17 +154,48 @@ def _walk(node, out: list, short: bool) -> None:
             _walk(v, out, short)
 
 
+# 유튜브 웹이 내부적으로 쓰는 요청 (공식 API 키 없이 채널 탭·영상 정보를 JSON으로 받음)
+INNERTUBE_CTX = {"client": {"clientName": "WEB", "clientVersion": "2.20250101.00.00", "hl": "ko", "gl": "KR"}}
+TAB_PARAMS = {"videos": "EgZ2aWRlb3PyBgQKAjoA", "shorts": "EgZzaG9ydHPyBgUKA5oBAA=="}
+
+
+def innertube(endpoint: str, payload: dict) -> dict | None:
+    body = json.dumps({"context": INNERTUBE_CTX, **payload}).encode()
+    status, raw = http(f"https://www.youtube.com/youtubei/v1/{endpoint}?prettyPrint=false", data=body)
+    if status != 200:
+        return None
+    try:
+        return json.loads(raw)
+    except ValueError:
+        return None
+
+
+def _page_diag(text: str) -> str:
+    """영상 목록을 못 찾았을 때 원인 추정용 요약"""
+    t = re.search(r"<title>(.*?)</title>", text, re.S)
+    i = text.find("ytInitialData")
+    ctx = re.sub(r"\s+", " ", text[max(0, i - 40): i + 60]) if i >= 0 else "ytInitialData 없음"
+    return f"제목 '{(t.group(1).strip() if t else '')[:60]}', 길이 {len(text)}, 주변: {ctx}"
+
+
 def fetch_channel_pages(channel_id: str) -> list[dict]:
-    """RSS가 안 될 때: 채널의 '동영상'·'쇼츠' 탭 페이지에서 영상 목록을 읽는다 (최근 약 30개씩)"""
+    """RSS가 안 될 때: 채널의 '동영상'·'쇼츠' 탭에서 영상 목록을 읽는다 (각 탭 최근 약 30개)"""
     found, seen = [], set()
     for tab, short in (("videos", False), ("shorts", True)):
-        status, body = http(f"https://www.youtube.com/channel/{channel_id}/{tab}?hl=ko&gl=KR")
-        m = YT_INITIAL.search(body.decode("utf-8", "replace")) if status == 200 else None
-        if not m:
-            note(f"채널 '{tab}' 탭에서 영상 목록을 읽지 못함 (응답 {status})")
-            continue
         items: list = []
-        _walk(json.loads(m.group(1)), items, short)
+        data = innertube("browse", {"browseId": channel_id, "params": TAB_PARAMS[tab]})
+        if data:
+            _walk(data, items, short)
+        if not items:  # 내부 요청이 안 되면 탭 페이지 HTML에서 읽기
+            status, body = http(f"https://www.youtube.com/channel/{channel_id}/{tab}?hl=ko&gl=KR")
+            text = body.decode("utf-8", "replace")
+            m = YT_INITIAL.search(text) if status == 200 else None
+            if m:
+                _walk(json.loads(m.group(1)), items, short)
+            if not items:
+                note(f"채널 '{tab}' 탭에서 영상 목록을 읽지 못함 (browse {'응답 있음' if data else '실패'}, 페이지 응답 {status}; {_page_diag(text)})")
+                continue
+        note(f"채널 '{tab}' 탭: {len(items)}개") if not GHA else print(f"::notice::채널 '{tab}' 탭에서 {len(items)}개를 읽었습니다")
         for it in items:
             if YT_ID_RE.match(it["id"]) and it["id"] not in seen:
                 seen.add(it["id"])
@@ -174,8 +206,44 @@ def fetch_channel_pages(channel_id: str) -> list[dict]:
 WATCH_FAIL: dict = {}
 
 
+def _find_key(node, key):
+    if isinstance(node, dict):
+        if key in node:
+            return node[key]
+        for v in node.values():
+            r = _find_key(v, key)
+            if r is not None:
+                return r
+    elif isinstance(node, list):
+        for v in node:
+            r = _find_key(v, key)
+            if r is not None:
+                return r
+    return None
+
+
+def fetch_next_details(vid: str) -> dict:
+    """내부 'next' 요청으로 게시일('2026. 10. 15.')·설명란을 읽는다"""
+    data = innertube("next", {"videoId": vid})
+    if not data:
+        return {}
+    out = {}
+    prim = _find_key(data, "videoPrimaryInfoRenderer") or {}
+    m = re.search(r"(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})", _text(prim.get("dateText")))
+    if m:
+        out["published"] = f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+    sec = _find_key(data, "videoSecondaryInfoRenderer") or {}
+    desc = (sec.get("attributedDescription") or {}).get("content") or _text(sec.get("description"))
+    if desc:
+        out["description"] = desc[:DESC_MAX]
+    return out
+
+
 def fetch_watch_details(vid: str) -> dict:
-    """영상 페이지에서 게시일·설명란을 읽는다 (설명란의 매물번호로 매물과 연결하기 위해)"""
+    """영상의 게시일·설명란을 읽는다 (설명란의 매물번호로 매물과 연결하기 위해). 내부 요청 → 영상 페이지 순"""
+    got = fetch_next_details(vid)
+    if got.get("published"):
+        return got
     status, body = http(f"https://www.youtube.com/watch?v={vid}&hl=ko")
     t = body.decode("utf-8", "replace")
     if status != 200 or '"publishDate"' not in t:
@@ -183,8 +251,8 @@ def fetch_watch_details(vid: str) -> dict:
                   else f"응답 {status}" if status != 200 else "게시일 정보 없음")
         WATCH_FAIL[reason] = WATCH_FAIL.get(reason, 0) + 1
         if status != 200:
-            return {}
-    out = {}
+            return got
+    out = dict(got)
     m = re.search(r'"publishDate":"([^"]+)"', t) or re.search(r'itemprop="datePublished" content="([^"]+)"', t) or re.search(r'"uploadDate":"([^"]+)"', t)
     if m:
         out["published"] = m.group(1)

@@ -220,7 +220,7 @@ class Videos(unittest.TestCase):
         uv.SITE, uv.OUT, uv.http, uv.time.sleep = self.saved
         self.tmp.cleanup()
 
-    def fake(self, url, follow=True, timeout=20):
+    def fake(self, url, follow=True, timeout=20, data=None):
         if "feeds/videos.xml" in url:
             return 200, RSS
         if "/shorts/" in url:
@@ -249,7 +249,9 @@ class Videos(unittest.TestCase):
         page = lambda d: ("<html><script>var ytInitialData = " + json.dumps(d, ensure_ascii=False) + ";</script></html>").encode()
         watch = b'<html>"publishDate":"2026-10-15T09:00:00-07:00" "shortDescription":"\\ub9e4\\ubb3c\\ubc88\\ud638 1001\\n\\uc124\\uba85"</html>'
 
-        def fake(url, follow=True, timeout=20):
+        def fake(url, follow=True, timeout=20, data=None):
+            if "youtubei/v1/" in url:
+                return 0, b""  # 내부 요청 실패 → HTML 경로 사용
             if "feeds/videos.xml" in url:
                 return 404, b""
             if url.endswith("/videos?hl=ko&gl=KR"):
@@ -269,6 +271,33 @@ class Videos(unittest.TestCase):
         self.assertFalse(out["AAAAAAAAAA1"]["isShort"])
         self.assertEqual(out["AAAAAAAAAA1"]["published"], "2026-10-15T09:00:00-07:00")
         self.assertIn("매물번호 1001", out["AAAAAAAAAA1"]["description"])
+
+    def test_innertube_browse_and_next(self):
+        browse_videos = {"contents": [{"lockupViewModel": {"contentId": "LLLLLLLLLL1", "contentType": "LOCKUP_CONTENT_TYPE_VIDEO",
+            "metadata": {"lockupMetadataViewModel": {"title": {"content": "양평 지평면 토지 660㎡(200평) 2억3천 #양평토지"}}}}}]}
+        nxt = {"contents": {"twoColumnWatchNextResults": {"results": {"results": {"contents": [
+            {"videoPrimaryInfoRenderer": {"dateText": {"simpleText": "2026. 10. 3."}}},
+            {"videoSecondaryInfoRenderer": {"attributedDescription": {"content": "매물번호 1001 설명"}}}]}}}}}
+
+        def fake(url, follow=True, timeout=20, data=None):
+            if "feeds/videos.xml" in url:
+                return 404, b""
+            if url.startswith("https://www.youtube.com/youtubei/v1/browse"):
+                body = json.loads(data)
+                return (200, json.dumps(browse_videos).encode()) if body["params"].startswith("EgZ2aWRlb3") else (200, b"{}")
+            if url.startswith("https://www.youtube.com/youtubei/v1/next"):
+                return 200, json.dumps(nxt, ensure_ascii=False).encode()
+            if "/shorts?" in url:
+                return 200, b"<html></html>"
+            if "oembed" in url:
+                return (404, b"") if "GONE" in url else (200, b'{"title": "x"}')
+            raise AssertionError(url)
+        uv.http = fake
+        self.assertEqual(uv.main(), 0)
+        out = {v["id"]: v for v in json.loads(uv.OUT.read_text())["videos"]}
+        self.assertFalse(out["LLLLLLLLLL1"]["isShort"])
+        self.assertEqual(out["LLLLLLLLLL1"]["published"], "2026-10-03")
+        self.assertIn("매물번호 1001", out["LLLLLLLLLL1"]["description"])
 
     def test_real_network_failure_does_not_raise(self):
         self.assertEqual(uv.http("http://127.0.0.1:9/", timeout=2)[0], 0)
