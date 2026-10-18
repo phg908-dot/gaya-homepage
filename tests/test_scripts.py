@@ -424,7 +424,7 @@ class Blog(unittest.TestCase):
             <link><![CDATA[https://blog.naver.com/gayayangpyeong/224429812285?fromRss=true&trackingCode=rss]]></link>
             <guid>https://blog.naver.com/gayayangpyeong/224429812285</guid>
             <category><![CDATA[지평·양평 매물]]></category>
-            <description><![CDATA[현장에 가 봤습니다. <img src="https://example.com/a.jpg" /> 길이 좋습니다.]]></description>
+            <description><![CDATA[현장에 가 봤습니다. <img src="https://example.com/a.jpg" /> <img src="https://blogthumb.pstatic.net/photo.jpg?type=s3" /> 길이 좋습니다.]]></description>
             <pubDate>Thu, 15 Oct 2026 07:00:00 +0900</pubDate>
           </item>
           <item>
@@ -432,14 +432,69 @@ class Blog(unittest.TestCase):
             <link>https://blog.naver.com/gayayangpyeong/224429812285?fromRss=true</link>
             <pubDate>Thu, 15 Oct 2026 07:00:00 +0900</pubDate>
           </item>
+          <item>
+            <title>아직 발행 전</title>
+            <link>https://blog.naver.com/gayayangpyeong/224499999999</link>
+            <pubDate>Fri, 01 Jan 2099 07:00:00 +0900</pubDate>
+            <description>예약</description>
+          </item>
         </channel></rss>""".encode()
         posts = ub.parse_rss(raw)
         self.assertEqual(len(posts), 1)
         self.assertEqual(posts[0]["link"], "https://blog.naver.com/gayayangpyeong/224429812285")
         self.assertEqual(posts[0]["published"], "2026-10-15")
         self.assertNotIn("<", posts[0]["summary"])
+        self.assertNotIn("pstatic", posts[0]["summary"])
         self.assertIn("현장에 가 봤습니다", posts[0]["summary"])
         self.assertEqual(posts[0]["category"], "지평·양평 매물")
+        self.assertEqual(posts[0]["image"], "https://blogthumb.pstatic.net/photo.jpg?type=w2")
+
+    def test_same_day_order_and_unsafe_image(self):
+        ub = load("update_blog")
+        raw = """<?xml version="1.0"?><rss><channel>
+          <item>
+            <title>오전에 올린 글</title>
+            <link>https://blog.naver.com/gayayangpyeong/11</link>
+            <pubDate>Thu, 01 Oct 2026 01:00:00 +0900</pubDate>
+            <description><![CDATA[<img src="javascript:alert(1)"><img src="http://blogthumb.pstatic.net/a.jpg">글]]></description>
+          </item>
+          <item>
+            <title>오후에 올린 글</title>
+            <link>https://blog.naver.com/gayayangpyeong/22</link>
+            <pubDate>Thu, 01 Oct 2026 18:30:00 +0900</pubDate>
+            <description>나중</description>
+          </item>
+        </channel></rss>""".encode()
+        posts = ub.parse_rss(raw)
+        self.assertEqual([p["title"] for p in posts], ["오후에 올린 글", "오전에 올린 글"])
+        self.assertNotIn("image", posts[1])
+        self.assertEqual(ub.safe_image("https://phinf.pstatic.net/a.jpg?type=f480x480"), "https://phinf.pstatic.net/a.jpg?type=f480x480")
+
+    def test_static_blog_keeps_fallback_without_feed(self):
+        html = '<div class="blog-list" id="blogList"><!--blog-fallback--><a class="blog-card" href="https://blog.naver.com/gayayangpyeong/224429812285">옛 글</a><!--/blog-fallback--></div>'
+        self.assertIn("옛 글", build.place_blog(html, []))
+        filled = build.place_blog(html, [{
+            "title": "새 글 <b>",
+            "link": "https://blog.naver.com/gayayangpyeong/9",
+            "published": "2026-10-18",
+            "category": "지평·양평 이야기",
+            "summary": "요약",
+            "image": "https://blogthumb.pstatic.net/a.jpg?type=w2",
+        }, {
+            "title": "다른 사이트",
+            "link": "https://example.com/x",
+            "image": "https://evil.example/a.jpg",
+        }])
+        self.assertNotIn("옛 글", filled)
+        self.assertNotIn("blog-fallback", filled)
+        self.assertIn("새 글 &lt;b&gt;", filled)
+        self.assertIn('referrerpolicy="no-referrer"', filled)
+        self.assertIn("blogthumb.pstatic.net/a.jpg?type=w2", filled)
+        self.assertNotIn("evil.example", filled)
+        self.assertNotIn("example.com/x", filled)
+        bare = build.static_blog([{"title": "사진 없음", "link": "https://blog.naver.com/gayayangpyeong/8", "image": "javascript:alert(1)"}])
+        self.assertNotIn("<img", bare)
+        self.assertNotIn("javascript", bare)
 
 
 if __name__ == "__main__":

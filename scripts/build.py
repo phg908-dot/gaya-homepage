@@ -870,6 +870,17 @@ def static_video_cards(videos):
     return "".join(static_video_card(v) for v in videos)
 
 
+PSTATIC_RE = re.compile(r"^https://(?:[a-z0-9-]+\.)*pstatic\.net/", re.I)
+
+
+def safe_blog_image(url: str) -> str:
+    """update_blog.safe_image 와 같다. 네이버 글 사진만 통과시킨다."""
+    url = str(url or "").strip()
+    if not PSTATIC_RE.match(url) or re.search(r"[\s\"'<>]", url):
+        return ""
+    return url
+
+
 def static_blog(posts):
     bits = []
     for p in posts[:6]:
@@ -881,9 +892,24 @@ def static_blog(posts):
         when = f"{m.group(1)}. {int(m.group(2))}. {int(m.group(3))}." if m else ""
         meta = " · ".join(x for x in (p.get("category") or "", when) if x)
         summary = f'<p>{escape(p["summary"])}</p>' if p.get("summary") else ""
+        image = safe_blog_image(p.get("image") or "")
+        # 네이버는 이 사이트 주소를 참조하면 사진을 거절한다. 출처를 보내지 않는다.
+        thumb = (f'<img class="blog-thumb" src="{escape(image, quote=True)}" alt="" loading="lazy" decoding="async" '
+                 f'referrerpolicy="no-referrer" onerror="this.remove()">') if image else ""
         bits.append(f'<a class="blog-card" href="{escape(link)}" target="_blank" rel="noopener">'
-                    f'<p class="when">{escape(meta)}</p><h3>{escape(title)}</h3>{summary}</a>')
+                    f'{thumb}<div class="blog-copy"><p class="when">{escape(meta)}</p><h3>{escape(title)}</h3>{summary}</div></a>')
     return "".join(bits)
+
+
+def place_blog(html, posts):
+    """최신 글이 있으면 그 카드로 바꾸고, 없으면 페이지에 적어 둔 링크를 그대로 둔다."""
+    rendered = static_blog(posts)
+    if not rendered:
+        return html
+    if "<!--blog-fallback-->" in html:
+        return re.sub(r"<!--blog-fallback-->.*?<!--/blog-fallback-->", rendered, html, count=1, flags=re.S)
+    return html.replace('<div class="blog-list" id="blogList"></div>',
+                        f'<div class="blog-list" id="blogList">{rendered}</div>')
 
 
 def static_stats(listings, videos):
@@ -944,9 +970,7 @@ def inject_static(out, site, listings=(), videos=()):
                     posts = json.loads(blog_path.read_text(encoding="utf-8")).get("posts") or []
                 except (OSError, ValueError):
                     posts = []
-                if posts:
-                    html = html.replace('<div class="blog-list" id="blogList"></div>',
-                                        f'<div class="blog-list" id="blogList">{static_blog(posts)}</div>')
+                html = place_blog(html, posts)
         if base:
             path = "" if f.name == "index.html" else f.name
             html = html.replace("<!--head-->", f'<link rel="canonical" href="{escape(base)}/{path}">\n  <meta property="og:url" content="{escape(base)}/{path}">')

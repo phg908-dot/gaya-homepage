@@ -208,11 +208,13 @@ select:focus, input:focus, textarea:focus { border-color: var(--navy); outline: 
 /* ── 블로그 */
 .blog-list { display: grid; gap: 14px; grid-template-columns: 1fr; }
 @media (min-width: 800px) { .blog-list { grid-template-columns: 1fr 1fr; } }
-.blog-card { display: block; background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 18px; text-decoration: none; color: inherit; }
+.blog-card { display: flex; flex-direction: column; gap: 12px; background: var(--card); border: 2px solid var(--line); border-radius: 16px; padding: 16px; text-decoration: none; color: inherit; }
 .blog-card:hover { border-color: var(--navy); }
+.blog-thumb { width: 100%; height: 210px; object-fit: cover; border-radius: 12px; background: var(--soft); }
+.blog-copy { min-width: 0; }
 .blog-card h3 { font-size: 22px; margin: 6px 0 8px; color: var(--fg); }
 .blog-card p { margin: 0; font-size: 18px; color: var(--muted); }
-.blog-card .when { font-weight: 800; color: var(--navy); }
+.blog-card .when { font-weight: 800; color: var(--navy); font-size: 18px; }
 
 /* ── 접수 띠 · 소개 */
 .cta-band { margin: 40px auto; display: grid; gap: 16px; background: var(--navy); color: #fff; border-radius: var(--radius); padding: 28px 22px; width: min(1084px, calc(100% - 36px)); }
