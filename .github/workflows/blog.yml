@@ -1,0 +1,57 @@
+# 네이버 블로그 최신 글
+#  3시간마다, 낮부터 밤까지만 RSS를 읽어 public/data/blog.json 을 갱신한다.
+#  한국 시간(KST): 10:00, 13:00, 16:00, 19:00, 22:00.
+#  자정부터 10:00 KST 까지는 실행하지 않는다. 00:00 실행은 두지 않는다.
+#  GitHub 가 예약 실행을 늦추면 자정을 넘길 수 있기 때문이다.
+#  cron 은 UTC 다. '0 1,4,7,10,13 * * *' = 01:00, 04:00, 07:00, 10:00, 13:00 UTC
+#  = 10:00, 13:00, 16:00, 19:00, 22:00 KST.
+#  내용이 바뀌어 main 에 커밋되면 홈페이지 자동화(site.yml)가 배포한다.
+#  Actions 화면에서 이 워크플로를 직접 실행할 수도 있다.
+name: 네이버 블로그 수집
+
+on:
+  schedule:
+    # KST(한국 시간) 10:00, 13:00, 16:00, 19:00, 22:00.
+    # cron 은 UTC. 01, 04, 07, 10, 13시 UTC = 위 다섯 시각. 자정–10:00 KST 는 없음.
+    - cron: "0 1,4,7,10,13 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: 네이버 블로그 수집
+        run: python3 scripts/update_blog.py || echo "::warning::블로그 수집 실패 — 기존 목록을 유지합니다"
+
+      - name: 블로그 목록 커밋
+        run: |
+          if git diff --quiet -- public/data/blog.json; then
+            echo "변경 없음"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/blog.json
+          git commit -m "네이버 블로그 목록 자동 갱신"
+          git pull --rebase
+          git push
+
+      # 공개 저장소는 60일간 활동이 없으면 예약 실행이 꺼지므로, 실행될 때마다 스스로를 다시 켜 둔다
+      - name: 예약 실행 유지
+        if: github.event_name == 'schedule'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow enable blog.yml --repo "${{ github.repository }}"
