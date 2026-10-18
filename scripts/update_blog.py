@@ -3,6 +3,7 @@
 
 표준 라이브러리만 사용한다. 글을 가져오지 못하면 기존 파일을 그대로 둔다.
 내용이 같으면 파일을 다시 쓰지 않아, 매시간 실행해도 빈 커밋이 생기지 않는다.
+발행 전 예약 글은 넣지 않는다. 대표 사진이 있으면 그 주소만 저장한다.
 """
 from __future__ import annotations
 
@@ -14,6 +15,7 @@ import time
 import urllib.error
 import urllib.request
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
 
@@ -25,6 +27,8 @@ DEFAULT_BLOG = "https://blog.naver.com/gayayangpyeong"
 UA = "Mozilla/5.0 (compatible; GayaHomepage/1.0; +https://phg908-dot.github.io/gaya-homepage/)"
 KEEP = 12
 LINK_RE = re.compile(r"https?://blog\.naver\.com/([^/?#\s]+)/(\d+)")
+IMG_RE = re.compile(r"""<img\b[^>]*?\bsrc\s*=\s*(['"])(.*?)\1""", re.I | re.S)
+PSTATIC_RE = re.compile(r"^https://(?:[a-z0-9-]+\.)*pstatic\.net/", re.I)
 
 
 def note(msg: str) -> None:
@@ -60,17 +64,63 @@ def summary_text(raw: str) -> str:
     return text
 
 
-def published_iso(raw: str) -> str:
+def parse_pub(raw: str):
     raw = (raw or "").strip()
     if not raw:
-        return ""
+        return None
     try:
-        dt = parsedate_to_datetime(raw)
+        return parsedate_to_datetime(raw)
+    except (TypeError, ValueError, OverflowError):
+        return None
+
+
+def published_iso(raw: str) -> str:
+    dt = parse_pub(raw)
+    if dt is not None:
         # 한국 시각의 날짜를 그대로 쓴다. UTC로 바꾸면 아침 글이 전날로 보인다.
         return dt.date().isoformat()
-    except (TypeError, ValueError, OverflowError):
-        m = re.search(r"(\d{4})-(\d{2})-(\d{2})", raw)
-        return m.group(0) if m else ""
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", raw or "")
+    return m.group(0) if m else ""
+
+
+def already_public(raw: str) -> bool:
+    """예약 글은 발행 시각이 지난 뒤에만 싣는다. 시각을 모르면 빼지 않는다."""
+    dt = parse_pub(raw)
+    if dt is None:
+        return True
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt <= datetime.now(timezone.utc)
+
+
+def pub_timestamp(raw: str) -> float:
+    dt = parse_pub(raw)
+    if dt is None:
+        return 0.0
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    try:
+        return dt.timestamp()
+    except (OverflowError, OSError, ValueError):
+        return 0.0
+
+
+def safe_image(url: str) -> str:
+    """네이버 글 사진만 허용한다. 작은 썸네일(type=s1~s3)은 카드에서 잘 보이도록 키운다."""
+    url = html.unescape(str(url or "")).strip()
+    if url.startswith("//"):
+        url = "https:" + url
+    if not PSTATIC_RE.match(url) or re.search(r"[\s\"'<>]", url):
+        return ""
+    return re.sub(r"([?&]type=)s[123](?=&|$)", r"\1w2", url)
+
+
+def first_image(raw: str) -> str:
+    for match in IMG_RE.finditer(raw or ""):
+        src = safe_image(match.group(2))
+        if src:
+            return src
+    return ""
 
 
 def parse_rss(body: bytes) -> list[dict]:
@@ -80,17 +130,26 @@ def parse_rss(body: bytes) -> list[dict]:
     for item in root.iter("item"):
         title = "".join(item.findtext("title") or "").strip()
         link = clean_link(item.findtext("guid") or item.findtext("link") or "")
-        if not title or not link or link in seen:
+        pub_raw = item.findtext("pubDate") or ""
+        if not title or not link or link in seen or not already_public(pub_raw):
             continue
         seen.add(link)
-        posts.append({
+        description = item.findtext("description") or ""
+        post = {
             "title": title,
             "link": link,
-            "published": published_iso(item.findtext("pubDate") or ""),
+            "published": published_iso(pub_raw),
             "category": "".join(item.findtext("category") or "").strip(),
-            "summary": summary_text(item.findtext("description") or ""),
-        })
-    posts.sort(key=lambda p: p.get("published") or "", reverse=True)
+            "summary": summary_text(description),
+            "_ts": pub_timestamp(pub_raw),
+        }
+        image = first_image(description)
+        if image:
+            post["image"] = image
+        posts.append(post)
+    posts.sort(key=lambda p: p.get("_ts") or 0, reverse=True)
+    for post in posts:
+        post.pop("_ts", None)
     return posts[:KEEP]
 
 
@@ -104,7 +163,7 @@ def load_json(path: Path) -> dict:
 
 def same_posts(a: list, b: list) -> bool:
     def key(p):
-        return (p.get("link"), p.get("title"), p.get("summary"), p.get("published"), p.get("category"))
+        return (p.get("link"), p.get("title"), p.get("summary"), p.get("published"), p.get("category"), p.get("image") or "")
     return [key(p) for p in a] == [key(p) for p in b]
 
 

@@ -1,5 +1,5 @@
 # 홈페이지 자동화
-#  1) 매시간 유튜브 새 영상과 네이버 블로그 새 글을 확인해 public/data/videos.json · blog.json 에 저장하고 커밋
+#  1) 매시간 유튜브 새 영상과 네이버 블로그 새 글(제목·날짜·사진)을 확인해 public/data/videos.json · blog.json 에 저장하고 커밋
 #  2) 매물/설정 파일을 고쳐 main에 올리면 명시사항 점검 결과를 Actions 화면에 표시
 #  3) 배포본을 gh-pages 브랜치에 올림 (GitHub Pages: Settings → Pages → Deploy from a branch → gh-pages)
 #     Cloudflare Pages를 쓰는 경우 저장소 변수 HOSTING=cloudflare 로 3)을 끔

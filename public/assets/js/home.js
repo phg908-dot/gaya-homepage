@@ -159,15 +159,34 @@
         ...[...v.listingNos].slice(0, 2).map((no) => el("a", { class: "vlink", href: G.listingUrl(no), text: `매물 번호 ${no} 보기` }))))));
   }
 
+  function blogImage(url) {
+    const s = String(url || "").trim();
+    return /^https:\/\/(?:[a-z0-9-]+\.)*pstatic\.net\/[^\s"'<>]+$/i.test(s) ? s : "";
+  }
+
   function renderBlog() {
     const posts = Array.isArray(blog.posts) ? blog.posts.slice(0, 6) : [];
-    $("blogEmpty").hidden = posts.length > 0;
-    $("blogList").replaceChildren(...posts.map((p) => el("a", {
-      class: "blog-card", href: p.link, target: "_blank", rel: "noopener",
-    },
-      el("p", { class: "when", text: [p.category, G.fmtDate(p.published)].filter(Boolean).join(" · ") }),
-      el("h3", { text: p.title || "블로그 글" }),
-      p.summary ? el("p", { text: p.summary }) : null)));
+    const fallback = $("blogList").querySelector('a[href*="blog.naver.com/"]');
+    if (!posts.length) {
+      $("blogEmpty").hidden = !!fallback;
+      return;
+    }
+    $("blogEmpty").hidden = true;
+    $("blogList").replaceChildren(...posts.map((p) => {
+      const src = blogImage(p.image);
+      return el("a", {
+        class: "blog-card", href: p.link, target: "_blank", rel: "noopener",
+      },
+        src ? el("img", {
+          class: "blog-thumb", src, alt: "", loading: "lazy", decoding: "async",
+          referrerpolicy: "no-referrer",
+          onerror(ev) { ev.currentTarget.remove(); },
+        }) : null,
+        el("div", { class: "blog-copy" },
+          el("p", { class: "when", text: [p.category, G.fmtDate(p.published)].filter(Boolean).join(" · ") }),
+          el("h3", { text: p.title || "블로그 글" }),
+          p.summary ? el("p", { text: p.summary }) : null));
+    }));
   }
 
   readQuery();
