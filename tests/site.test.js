@@ -228,10 +228,21 @@ async function page(browser, opts = {}) {
     const sms = p.locator(".entrust-actions a").nth(1);
     ok((await call.getAttribute("href")) === "tel:01034060071" && (await call.innerText()).includes("전화로 맡기기"), "전화로 맡기기");
     const smsHref = decodeURIComponent(await sms.getAttribute("href"));
-    ok(smsHref.startsWith("sms:01034060071") && smsHref.includes("매물 내놓고 싶습니다") && smsHref.includes("주소:") && smsHref.includes("종류:") && smsHref.includes("희망가격:"), "문자 초안");
+    ok(smsHref.startsWith("sms:01034060071") && smsHref.includes("매물 접수 문의드립니다") && smsHref.includes("위치:") && smsHref.includes("종류:") && smsHref.includes("희망가격:"), "문자 초안");
     ok(await call.evaluate((e) => e.getBoundingClientRect().height) >= 60, "맡기기 버튼 높이");
     ok(await p.evaluate(() => parseFloat(getComputedStyle(document.body).fontSize) >= 20), "맡기기 글자 20px 이상");
     ok((await p.content()).includes("전·월세") && !(await p.locator("body").innerText()).includes("전원주택"), "접수 문구의 종류");
+
+    console.log("내 매물 맡기기 (컴퓨터)");
+    p = await page(browser);
+    await p.goto(BASE + "sell.html");
+    await p.waitForSelector(".entrust");
+    ok(!(await p.locator(".entrust-actions a").first().isVisible()) && !(await p.locator(".entrust-actions a").nth(1).isVisible()), "컴퓨터에서는 전화로·문자로 맡기기 버튼을 숨김");
+    ok(await p.locator(".pc-entrust").isVisible() && (await p.locator(".pc-entrust").innerText()).includes("010-3406-0071"), "컴퓨터에서는 번호를 글자로 보여 줌");
+    await p.goto(BASE);
+    await p.waitForSelector("#cards .card");
+    ok(!(await p.locator(".hero-actions a[href^='tel:']").isVisible()) && await p.locator(".hero-actions .pc-tel").isVisible(), "컴퓨터 첫 화면: 전화하기 대신 번호 글자");
+    ok(!(await p.locator(".mbar").isVisible()), "컴퓨터에서는 하단 막대 없음");
 
     console.log("배포 빌드");
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "gaya-"));

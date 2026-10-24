@@ -160,10 +160,19 @@ class Normalize(unittest.TestCase):
 
     def test_video_card_phone_is_not_inside_watch_link(self):
         html = build.static_video_card({"id": "abcdefghijk", "title": "지평면 토지 330㎡", "published": "2026-10-02"})
-        self.assertIn('class="btn navy card-call" href="tel:01034060071">전화하기', html)
+        self.assertIn('class="btn navy card-call call-only" href="tel:01034060071">전화하기', html)
+        self.assertIn('이 매물 문의하기', html)
+        self.assertIn('pc-only pc-ask', html)
         overlay = re.search(r'<a class="card-link".*?</a>', html, re.S).group(0)
         self.assertNotIn("tel:", overlay)
         self.assertLess(html.index("</h3></div></div><p class=\"card-actions\">"), html.index("tel:01034060071"))
+
+    def test_video_ask_uses_listing_code(self):
+        html = build.video_ask_html({"title": "토지", "description": "매물번호 망미160 | 160평"})
+        self.assertIn(build.quote("매물번호 망미160 문의드립니다."), html)
+        self.assertIn("sms:01034060071?&amp;body=", html)
+        self.assertEqual(build.listing_code({"title": "매물번호350 양평"}), "350")
+        self.assertEqual(build.listing_code({"title": "양평 토지", "description": "매물번호를 말씀해 주세요"}), "")
 
     def test_jsonld_cannot_break_out_of_script(self):
         out = build.ld_json({"name": "<!--<script></script>&"})
