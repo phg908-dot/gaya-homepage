@@ -549,7 +549,7 @@ def header_html(root, o, current=""):
     <div class="wrap top-in">
       <a class="brand" href="{root}"><span class="logo" aria-hidden="true">{ICON}</span><span>{escape(o.get('name', ''))}</span></a>
       <nav class="nav" aria-label="주 메뉴">{nav}</nav>
-      <a class="tel-btn" href="tel:{re.sub(r'[^0-9+]', '', tel)}">{escape(tel)}</a>
+      <a class="tel-btn tel-text" href="tel:{re.sub(r'[^0-9+]', '', tel)}">{escape(tel)}</a>
     </div>
   </header>"""
 
@@ -728,10 +728,10 @@ def page(l, site, videos_by_id):
         <div class="panel">
           <h2 class="h3">이 매물 문의하기</h2>
           <p class="muted">문의 시 매물번호를 말씀해 주세요: <b>No.{l['no']}</b></p>
-          <a class="tel-big" href="{tel_href}">{escape(tel)}</a>
+          <a class="tel-big tel-text" href="{tel_href}">{escape(tel)}</a>
           {f'<a class="tel-sub" href="tel:{sms_to}">{escape(o["mobile"])}</a>' if o.get('mobile') else ''}
           <div class="two">
-            <a class="btn gold" href="sms:{sms_to}?&body={quote('[가야공인중개사] 매물 No.' + str(l['no']) + ' 문의드립니다.')}">문자 문의</a>
+            <a class="btn gold call-only" href="sms:{sms_to}?&body={quote('[가야공인중개사] 매물 No.' + str(l['no']) + ' 문의드립니다.')}">문자 문의</a>
             <a class="btn navy" data-kakao href="#" target="_blank" rel="noopener">카카오톡</a>
           </div>
         </div>
@@ -844,6 +844,27 @@ def video_category(v):
     return _category_from(v.get("title"), rental=True) or _category_from((v.get("description") or "")[:300])
 
 
+# common.js listingCode 와 같은 규칙: 설명의 "매물번호 망미160", "매물번호350"
+LISTING_CODE_RE = re.compile(r"매물\s*번호\s*[:#.]?\s*[\"“']?([0-9A-Za-z가-힣]*\d[0-9A-Za-z]*)")
+
+
+def listing_code(v):
+    m = LISTING_CODE_RE.search((v.get("title") or "") + "\n" + (v.get("description") or ""))
+    return m.group(1) if m else ""
+
+
+def video_ask_html(v, tel="010-3406-0071", btn="light-line"):
+    """스마트폰: [이 매물 문의하기] 문자 버튼 / 컴퓨터: 번호를 글자로 (common.js videoAsk 와 같은 모양)"""
+    code = listing_code(v)
+    if code:
+        body = f"[가야공인중개사] 매물번호 {code} 문의드립니다."
+    else:
+        body = f"[가야공인중개사] 영상 매물 문의드립니다. ({str(v.get('title') or '')[:40]})"
+    to = re.sub(r"[^0-9+]", "", tel)
+    return (f'<a class="btn {btn} call-only video-ask" href="sms:{to}?&amp;body={quote(body, safe="")}">이 매물 문의하기</a>'
+            f'<span class="pc-only pc-ask">전화·문자 <b>{escape(tel)}</b>{escape(" · 매물번호 " + code) if code else ""}</span>')
+
+
 def static_video_card(v):
     vid = str(v.get("id") or "")
     title = v.get("title") or "매물 영상"
@@ -861,8 +882,8 @@ def static_video_card(v):
             f'<span class="yt-play" aria-hidden="true"></span></div>'
             f'<div class="card-body"><p class="meta">{escape(meta)}</p>'
             f'<h3>{escape(title)}</h3></div></div>'
-            f'<p class="card-actions"><a class="btn gold" href="{watch}" target="_blank" rel="noopener">영상 보기</a>'
-            f'<a class="btn navy card-call" href="tel:01034060071">전화하기</a></p>'
+            f'<p class="card-actions"><a class="btn gold card-watch" href="{watch}" target="_blank" rel="noopener">영상 보기</a>'
+            f'<a class="btn navy card-call call-only" href="tel:01034060071">전화하기</a>{video_ask_html(v)}</p>'
             f"</article>")
 
 

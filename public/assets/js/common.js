@@ -384,6 +384,7 @@
         n.href = `sms:${digits(o.mobile || o.tel)}?&body=${encodeURIComponent(n.dataset.body || "[가야공인중개사] 문의드립니다.")}`;
         n.removeAttribute("target");
         n.textContent = "문자 문의";
+        n.classList.add("call-only");  // 문자는 스마트폰에서만 (컴퓨터에서는 열 앱이 없음)
       } else n.hidden = true;
     });
     const h = String((site.youtube || {}).handle || "").trim();
@@ -488,5 +489,35 @@
     return mapPromise;
   }
 
-  window.GAYA = { ROOT, loadData, money, priceText, basePrice, areaText, mainArea, filterArea, regionText, thumb, listingUrl, el, videoFacade, renderFooter, fillOfficeBits, loadMap, specLine, card, favs, toggleFav, fmtDate, announce, ytId, buildingLine, directionText };
+  // ── 영상 매물 문의: 설명의 "매물번호 망미160", "매물번호350" 같은 번호를 문자 초안에 넣는다
+  const CODE_RE = /매물\s*번호\s*[:#.]?\s*["“']?([0-9A-Za-z가-힣]*\d[0-9A-Za-z]*)/;
+  function listingCode(v) {
+    const m = CODE_RE.exec((v.title || "") + "\n" + (v.description || ""));
+    if (m) return m[1];
+    if (v.listingNos && v.listingNos.size) return String([...v.listingNos][0]);
+    const cited = citedNumbers(v);
+    return cited.length ? String(cited[0]) : "";
+  }
+  const telDigits = (s) => String(s || "").replace(/[^0-9+]/g, "");
+  function officeTel(site) { return ((site && site.office) || {}).tel || "010-3406-0071"; }
+  function smsHref(site, body) {
+    const o = (site && site.office) || {};
+    return `sms:${telDigits(o.mobile || officeTel(site))}?&body=${encodeURIComponent(body)}`;
+  }
+  function videoAskBody(v) {
+    const code = listingCode(v);
+    if (code) return `[가야공인중개사] 매물번호 ${code} 문의드립니다.`;
+    const t = String(v.title || "").slice(0, 40);
+    return `[가야공인중개사] 영상 매물 문의드립니다. (${t})`;
+  }
+  // 스마트폰: [이 매물 문의하기] 문자 버튼 / 컴퓨터: 번호를 글자로
+  function videoAsk(v, site, cls) {
+    const code = listingCode(v);
+    return [
+      el("a", { class: "btn " + (cls || "gold") + " call-only video-ask", href: smsHref(site, videoAskBody(v)), text: "이 매물 문의하기" }),
+      el("span", { class: "pc-only pc-ask" }, "전화·문자 ", el("b", { text: officeTel(site) }), code ? ` · 매물번호 ${code}` : ""),
+    ];
+  }
+
+  window.GAYA = { ROOT, loadData, money, priceText, basePrice, areaText, mainArea, filterArea, regionText, thumb, listingUrl, el, videoFacade, renderFooter, fillOfficeBits, loadMap, specLine, card, favs, toggleFav, fmtDate, announce, ytId, buildingLine, directionText, listingCode, smsHref, videoAsk, officeTel };
 })();

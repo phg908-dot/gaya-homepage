@@ -35,14 +35,14 @@
         <a href="sell.html">매물 접수</a>
         <a href="about.html">사무소 소개</a>
       </nav>
-      <a class="tel-btn" data-office="telLink" href="tel:01034060071">010-3406-0071</a>
+      <a class="tel-btn tel-text" data-office="telLink" href="tel:01034060071">010-3406-0071</a>
     </div>
   </header>
 
   <main class="wrap page" id="main">
     <div class="sec-head">
       <h1>매물 영상 <span class="count" id="count"></span></h1>
-      <a class="more-link" data-youtube href="#" target="_blank" rel="noopener">유튜브 채널 구독 →</a>
+      <span class="sec-links"><a class="more-link" data-youtube href="#" target="_blank" rel="noopener">유튜브 채널 구독 →</a><a class="btn gold sec-btn" href="sell.html">내 매물 맡기기</a></span>
     </div>
     <div class="vtools">
       <div class="chips" role="group" aria-label="영상 종류">
@@ -91,7 +91,8 @@
         el("div", { class: "vbody" },
           el("h2", { text: v.title }),
           el("p", { class: "muted small", text: G.fmtDate(v.published) + (v.isShort ? " · 쇼츠" : "") }),
-          ...[...v.listingNos].map((no) => el("a", { class: "vlink", href: G.listingUrl(no), text: `매물 No.${no} 보기 →` }))))));
+          ...[...v.listingNos].map((no) => el("a", { class: "vlink", href: G.listingUrl(no), text: `매물 No.${no} 보기 →` })),
+          el("div", { class: "vactions" }, ...G.videoAsk(v, site))))));
     }
     document.querySelectorAll(".vtools .chip").forEach((c) => c.addEventListener("click", () => {
       kind = c.dataset.kind;
