@@ -120,8 +120,9 @@
           el("p", { class: "meta" }, [cat, G.fmtDate(v.published)].filter(Boolean).join(" · ")),
           el("h3", { text: v.title || "매물 영상" }))),
       el("p", { class: "card-actions" },
-        el("a", { class: "btn gold", href: watch, target: "_blank", rel: "noopener", text: "영상 보기" }),
-        el("a", { class: "btn navy card-call", href: tel, text: "전화하기" })));
+        el("a", { class: "btn gold card-watch", href: watch, target: "_blank", rel: "noopener", text: "영상 보기" }),
+        el("a", { class: "btn navy card-call call-only", href: tel, text: "전화하기" }),
+        ...G.videoAsk(v, site, "light-line")));
   }
 
   let lastCount = -1;
@@ -156,7 +157,8 @@
       el("div", { class: "vbody" },
         el("h3", { text: v.title }),
         el("p", { class: "muted", text: G.fmtDate(v.published) }),
-        ...[...v.listingNos].slice(0, 2).map((no) => el("a", { class: "vlink", href: G.listingUrl(no), text: `매물 번호 ${no} 보기` }))))));
+        ...[...v.listingNos].slice(0, 2).map((no) => el("a", { class: "vlink", href: G.listingUrl(no), text: `매물 번호 ${no} 보기` })),
+        el("div", { class: "vactions" }, ...G.videoAsk(v, site))))));
   }
 
   function blogImage(url) {

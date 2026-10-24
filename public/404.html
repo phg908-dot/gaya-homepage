@@ -13,6 +13,8 @@
     a { display: inline-block; margin: 6px; padding: 14px 18px; min-height: 52px; border-radius: 12px; font-weight: 800; font-size: 18px; text-decoration: none; }
     .p { background: #0b2545; color: #fff; }
     .s { background: #f0b429; color: #1a1208; }
+    /* 컴퓨터(마우스)에서는 전화를 걸 수 없으므로 번호만 글자로 보여 준다 */
+    @media not all and (hover: none) and (pointer: coarse) and (max-width: 1024px) { .tel-text { pointer-events: none; background: transparent; color: #0b2545; border: 3px solid #f0b429; } }
     .brand { display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; color: #0b2545; margin: 0 0 14px; font-size: 18px; }
   </style>
 </head>
@@ -22,7 +24,7 @@
     <h1>찾으시는 페이지가 없습니다</h1>
     <p>거래가 완료되어 내려간 매물이거나 주소가 바뀌었을 수 있습니다.<br>비슷한 매물을 찾아 드릴게요.</p>
     <a class="p" href="/" data-home>전체 매물 보기</a>
-    <a class="s" href="tel:01034060071">전화 010-3406-0071</a>
+    <a class="s tel-text" href="tel:01034060071">전화 010-3406-0071</a>
   </main>
   <script>
     (function () {
