@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>유튜브 설명란 만들기 · 관리 도구</title>
+  <link rel="icon" href="../images/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    .tool { display: grid; gap: 16px; max-width: 820px; min-width: 0; }
+    .tool textarea { width: 100%; max-width: 100%; min-height: 420px; font: 14px/1.6 ui-monospace, Menlo, Consolas, monospace; padding: 12px; border: 1px solid var(--line); border-radius: 10px; }
+    .tool .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; min-width: 0; max-width: 100%; }
+    .tool .row select { flex: 1 1 160px; min-width: 0; width: min(100%, 28rem); max-width: 100%; }
+    .warn { background: #fff4e5; color: #7a4a00; border-radius: 10px; padding: 10px 14px; font-size: 14px; margin: 0; }
+  </style>
+</head>
+<body data-root="../">
+  <main class="wrap page tool">
+    <h1>유튜브 설명란 만들기</h1>
+    <p class="muted">매물을 고르면 영상 설명란에 붙여 넣을 <b>광고 명시사항 + 매물번호</b> 문구를 만들어 줍니다. 설명란에 <code>매물번호 1234</code>가 들어가면 홈페이지 매물 페이지에 영상이 자동 연결됩니다.</p>
+    <div class="row">
+      <label for="pick">매물</label>
+      <select id="pick"></select>
+      <button class="btn navy" type="button" id="copy">복사하기</button>
+    </div>
+    <p class="warn" id="warn" hidden></p>
+    <label class="sr" for="out">설명란 문구</label>
+    <textarea id="out" readonly></textarea>
+    <p class="muted small">이 페이지는 검색엔진에 노출되지 않습니다(noindex). 영상 안에도 사무소 명칭·등록번호·연락처 자막을 넣는 것을 권장합니다.</p>
+  </main>
+  <script src="../assets/js/common.js"></script>
+  <script src="../assets/js/rules.js"></script>
+  <script>
+  (async function () {
+    const G = window.GAYA, $ = (id) => document.getElementById(id);
+    const { site, listings } = await G.loadData();
+    const o = site.office;
+    const base = (site.siteUrl || location.origin + location.pathname.replace(/admin\/.*$/, "")).replace(/\/$/, "");
+    const RES = ["주택", "아파트", "빌라", "연립", "다세대", "다가구", "원룸", "오피스텔", "펜션", "고시원", "다중생활", "기숙사", "주상복합", "노인복지", "공관"];
+    const v = (x, unit) => (x === null || x === undefined || x === "" ? "(입력 필요)" : String(x) + (unit || ""));
+    listings.forEach((l) => $("pick").append(G.el("option", { value: l.no, text: `No.${l.no} ${l.title}` })));
+
+    function text(l) {
+      const b = l.building, land = l.land || {};
+      const lines = [
+        `▶ 매물번호 ${l.no} | ${l.deal} ${l.type}`,
+        `▶ 소재지: ${G.regionText(l.region, true) || "(입력 필요)"}`,
+        `▶ 가격: ${G.priceText(l)}`,
+      ];
+      if (land.area) lines.push(`▶ 토지면적: ${G.areaText(land.area)}${land.jimok ? ` / 지목: ${land.jimok}` : ""}${land.zoning ? ` / ${land.zoning}` : ""}`);
+      if (b) {
+        if (b.violation) lines.push("▶ 위반건축물");
+        if (b.use) lines.push(`▶ 건축물 용도: ${b.use}`);
+        lines.push(`▶ 전용면적: ${b.area ? G.areaText(b.area) : "(입력 필요)"}`);
+        lines.push(`▶ 총 ${v(b.totalFloors, "층")}${b.floor ? ` (해당 ${b.floor})` : ""} / 사용승인일: ${v(b.approvalDate)}`);
+        lines.push(`▶ 방향: ${b.direction ? G.directionText(b.direction) : "(입력 필요)"}`);
+        const isRes = b.use === "단독주택" || b.use === "공동주택" || RES.some((w) => (l.type || "").includes(w));
+        lines.push(`▶ ${isRes || b.rooms != null ? `방 ${v(b.rooms, "개")} / ` : ""}욕실 ${v(b.baths, "개")} / 주차 ${v(b.parking, "대")}`);
+        lines.push(`▶ 입주가능일: ${v(b.moveIn)}${isRes || b.maintenance ? ` / 관리비: ${v(b.maintenance)}` : ""}`);
+      }
+      if (l.summary) lines.push("", l.summary);
+      lines.push("", `📄 매물 상세: ${base}/listing/${l.no}.html`, "",
+        "━━━━━━━━━━━━━━━━",
+        `${o.name}`,
+        `대표 공인중개사: ${o.ceo || "(입력 필요)"}`,
+        `중개사무소 등록번호: ${o.regNo || "(입력 필요)"}`,
+        `소재지: ${o.address || "(입력 필요)"}`,
+        `연락처: ${[o.tel, o.mobile].filter(Boolean).join(" / ")}`,
+        "━━━━━━━━━━━━━━━━", "",
+        `#${(l.region.sigungu || "").replace(/(군|시)$/, "")}부동산 #${l.region.eupmyeon || ""} #${(l.type || "").replace(/·/g, "")} #${l.deal}`);
+      return lines.join("\n");
+    }
+    function render() {
+      const l = listings.find((x) => String(x.no) === $("pick").value);
+      if (!l) { $("out").value = "등록된 매물이 없습니다."; return; }
+      $("out").value = text(l);
+      const miss = [];
+      if (l.sample) miss.push("샘플 매물입니다");
+      const officeMissing = [["name", "상호"], ["ceo", "대표"], ["regNo", "등록번호"], ["address", "소재지"], ["tel", "연락처"]].filter(([k]) => !o[k]).map(([, n]) => n);
+      if (officeMissing.length) miss.push(`사무소 명시사항(${officeMissing.join("·")}) 입력 필요`);
+      if (window.GAYA_RULES) miss.push(...window.GAYA_RULES.problems(l, listings));
+      else if (/가격 문의/.test(G.priceText(l))) miss.push("가격은 단일금액으로 표시해야 합니다");
+      $("warn").hidden = !miss.length;
+      $("warn").textContent = miss.length ? "이 상태로는 광고에 쓸 수 없습니다 — " + miss.join(" · ") : "";
+      $("copy").disabled = miss.length > 0;
+    }
+    const want = new URLSearchParams(location.search).get("no");
+    if (want && listings.some((l) => String(l.no) === want)) $("pick").value = want;
+    $("pick").addEventListener("change", render);
+    $("copy").addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText($("out").value); $("copy").textContent = "복사됨 ✓"; }
+      catch (_) { $("out").select(); document.execCommand("copy"); $("copy").textContent = "복사됨 ✓"; }
+      setTimeout(() => ($("copy").textContent = "복사하기"), 1500);
+    });
+    render();
+  })();
+  </script>
+</body>
+</html>
