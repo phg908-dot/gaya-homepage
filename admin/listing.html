@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>매물 편집기 · 관리 도구</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f3a5f'/%3E%3Cpath d='M14 34 32 18l18 16v14H38V38H26v10H14z' fill='%23c9a46a'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../assets/css/style.css">
+  <style>
+    /* 매물 편집기 전용 — style.css 의 변수·클래스를 그대로 사용 */
+    .ed-body [hidden] { display: none !important; }
+    .ed-body { padding-bottom: 84px; }
+    @media (min-width: 1100px) { .ed-body { padding-bottom: 0; } }
+    .wrap.ed-wide { width: min(1440px, 100%); }
+    .top-in { min-width: 0; }
+    .ed-nav { display: none; gap: 18px; margin-left: auto; }
+    .ed-nav a { color: #fff; text-decoration: none; font-weight: 600; opacity: .88; }
+    .ed-nav a:hover { opacity: 1; color: var(--gold); }
+    .ed-pill { margin-left: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 5px 12px; border-radius: 999px; font-size: 14px; font-weight: 800; text-decoration: none; color: #fff; background: rgb(255 255 255 / .14); }
+    .ed-pill.is-dirty { background: var(--gold); color: var(--navy-ink); }
+    .ed-pill.is-done { background: #e6f5ee; color: #14573a; }
+    @media (min-width: 700px) { .ed-nav { display: flex; } .ed-pill { margin-left: 4px; } }
+
+    .ed-intro { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+    .ed-intro h1 { font-size: clamp(22px, 4vw, 28px); margin-bottom: 4px; }
+    .ed-intro p { margin: 0; }
+
+    /* 배치: 모바일 = 목록 → 점검 → 입력 → 저장, 태블릿 = 2단, 넓은 화면 = 3단 */
+    .ed { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "list" "check" "form" "export"; align-items: start; }
+    .ed-pane-list { grid-area: list; min-width: 0; }
+    .ed-pane-form { grid-area: form; min-width: 0; }
+    .ed-pane-side { display: contents; }
+    #checkPanel { grid-area: check; min-width: 0; }
+    #exportPanel { grid-area: export; min-width: 0; }
+    @media (min-width: 760px) {
+      .ed { grid-template-columns: 280px minmax(0, 1fr); grid-template-areas: "list check" "list form" "list export"; }
+      /* 900px 미만에서는 머리글이 따라오지 않으므로 화면 맨 위에 붙임 */
+      .ed-pane-list { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+    }
+    @media (min-width: 900px) { .ed-pane-list { top: 76px; max-height: calc(100vh - 92px); } }
+    @media (min-width: 1100px) {
+      .ed { grid-template-columns: 290px minmax(0, 1fr) 330px; grid-template-areas: "list form side"; }
+      .ed-pane-side { grid-area: side; display: grid; gap: 16px; position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow: auto; padding: 0 2px 4px; }
+      #checkPanel, #exportPanel { grid-area: auto; }
+    }
+    .panel h2 { font-size: 18px; margin-bottom: 10px; }
+
+    /* 목록 */
+    .ed-lp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .ed-lp-head h2 { margin: 0; }
+    .ed-lp-filter { margin-bottom: 10px; }
+    .ed-lp-filter .chip, .ed-sugg .chip, .ed-zchips .chip, .ed-quick .chip { padding: 5px 11px; font-size: 14px; }
+    .ed-lp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .ed-li { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 3px; background: #fff; min-width: 0; }
+    .ed-li[aria-current="true"] { border-color: var(--navy); box-shadow: inset 0 0 0 1px var(--navy); background: #f7f9fc; }
+    .ed-li-top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; }
+    .ed-li-title { font-weight: 700; overflow-wrap: anywhere; line-height: 1.4; }
+    .ed-li-meta { font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+    .ed-li-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .ed-sample-box { background: #fdecec; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+    .ed-sample-box p { margin: 0 0 8px; }
+
+    .ed-tag { display: inline-block; font-size: 12px; font-weight: 800; padding: 1px 7px; border-radius: 6px; background: #eef2f7; color: var(--navy); white-space: nowrap; }
+    .ed-tag-sample { background: #b42323; color: #fff; }
+    .ed-tag-done { background: #5b6472; color: #fff; }
+    .ed-tag-urgent { background: var(--orange); color: #fff; }
+    .ed-badge { display: inline-block; justify-self: start; font-size: 13px; font-weight: 800; padding: 2px 8px; border-radius: 6px; }
+    .ed-badge-ok { background: #e6f5ee; color: #14573a; }
+    .ed-badge-bad { background: #fdecec; color: #a12020; }
+    .ed-badge-off { background: #eef0f3; color: #3f4753; }
+
+    .btn.ed-sm { padding: 7px 11px; font-size: 14px; border-radius: 8px; min-height: 36px; }
+    .btn.ghost { border-color: var(--field-line, #7d8a9b); }
+    .btn.ed-danger { color: #a12020; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .ed-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+    /* 입력 폼 */
+    .ed-form { display: grid; gap: 16px; }
+    .ed-form fieldset { min-width: 0; margin: 0 0 14px; padding: 0; border: 0; }
+    .ed-sec h2 { display: flex; align-items: center; gap: 8px; }
+    .ed-sec h2 .ed-n { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--navy); color: #fff; font-size: 14px; flex: none; }
+    .ed-sec h2 .ed-unit { color: var(--muted); font-size: 14px; font-weight: 600; }
+    .ed-form-head { display: grid; gap: 10px; }
+    .ed-form-head h2 { margin: 0; overflow-wrap: anywhere; }
+    .ed-form-head:focus { outline: none; }
+    .ed-fld { display: grid; gap: 4px; margin-bottom: 14px; min-width: 0; align-content: start; }
+    .ed-fld > label, .ed-lbl { font-weight: 700; font-size: 15px; }
+    legend.ed-lbl { padding: 0; margin-bottom: 6px; }
+    .ed-req { font-style: normal; font-size: 12px; font-weight: 800; color: #a12020; margin-left: 4px; }
+    .ed-hint { margin: 0; font-size: 13px; color: var(--muted); }
+    .ed-ferr { margin: 0; font-size: 13px; color: #a12020; font-weight: 700; }
+    .ed-fnote { margin: 0; font-size: 13px; color: var(--navy); font-weight: 700; }
+    .ed-pv { font-size: 14px; color: var(--navy); font-weight: 800; min-height: 1.3em; }
+    .ed-pv-line { display: block; margin: 2px 0 12px; font-size: 14px; color: var(--navy); font-weight: 700; }
+    .ed-g2, .ed-g3, .ed-g4 { display: grid; gap: 0 14px; }
+    .ed-g2 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); }
+    .ed-g3 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr)); }
+    .ed-g4 { grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); }
+    /* 입력칸 테두리는 배경 대비 3:1 이상 (style.css --field-line) */
+    .ed-form input:not([type=checkbox]):not([type=radio]):not([type=file]), .ed-form select, .ed-form textarea {
+      width: 100%; min-width: 0; min-height: 44px; padding: 9px 12px; border: 1px solid var(--field-line, #7d8a9b); border-radius: 10px; background: #fff; color: var(--fg); font: inherit;
+    }
+    .ed-form textarea { min-height: 150px; resize: vertical; line-height: 1.6; }
+    .ed-form [aria-invalid="true"] { border-color: var(--red) !important; background: #fff7f7 !important; }
+    .ed-seg { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ed-seg label { position: relative; cursor: pointer; }
+    .ed-seg input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+    .ed-seg span { display: inline-flex; align-items: center; min-height: 42px; padding: 8px 16px; border: 1px solid var(--field-line, #7d8a9b); border-radius: 999px; background: #fff; font-weight: 700; }
+    .ed-seg input:checked + span { background: var(--navy); border-color: var(--navy); color: #fff; }
+    .ed-seg input:focus-visible + span { outline: 3px solid var(--navy-ink); outline-offset: 2px; }
+    .ed-checks { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 4px 0 10px; }
+    .ed-switch { display: flex; align-items: center; gap: 10px; font-weight: 800; padding: 10px 12px; margin-bottom: 12px; background: #f1f4f8; border-radius: 10px; cursor: pointer; }
+    .ed-switch input { width: 22px; height: 22px; flex: none; accent-color: var(--navy); }
+    .ed-sec-body { padding-top: 4px; }
+    .ed-py { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 2px; }
+    .ed-py label { font-size: 13px; color: var(--muted); font-weight: 700; }
+    .ed-form .ed-py input.ed-py-in { width: 92px !important; flex: none; min-height: 36px !important; padding: 6px 10px !important; }
+    .ed-quick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+    .ed-quick select, .ed-form .ed-quick input { width: auto !important; min-height: 36px !important; padding: 5px 8px !important; font-size: 14px !important; }
+    .ed-zchips { display: grid; gap: 6px; margin-top: 6px; }
+    .ed-zgroup { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .ed-zgroup > b { font-size: 13px; color: var(--muted); min-width: 92px; }
+    @media (max-width: 599px) { .ed-zgroup > b { flex-basis: 100%; } }
+    .ed-form .check { align-items: flex-start; } .ed-form .check input { margin-top: 4px; flex: none; }
+    .ed-addrow { display: flex; gap: 6px; }
+    .ed-addrow input { flex: 1; }
+    .ed-taglist { list-style: none; padding: 0; margin: 2px 0 4px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .ed-taglist li { display: inline-flex; align-items: center; gap: 2px; padding: 3px 4px 3px 11px; border-radius: 999px; background: #eef2f7; color: var(--navy); font-weight: 700; font-size: 14px; overflow-wrap: anywhere; }
+    .ed-taglist button { min-width: 30px; min-height: 30px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font: inherit; cursor: pointer; }
+    .ed-taglist button:hover { background: #dfe6ef; color: var(--fg); }
+    .ed-sugg { margin-top: 4px; }
+    .ed-vlist { list-style: none; padding: 0; margin: 6px 0 0; display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+    .ed-vitem { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; min-width: 0; }
+    .ed-vitem img, .ed-vitem .ed-ph-img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #dfe5ec; }
+    .ed-vitem .ed-ph-img { display: grid; place-items: center; font-size: 13px; color: #a12020; font-weight: 700; padding: 8px; text-align: center; }
+    .ed-vi-body { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between; padding: 6px 8px; font-size: 13px; }
+    .ed-vi-body code { overflow-wrap: anywhere; font-size: 13px; }
+    .ed-vi-body .ed-row { gap: 4px; }
+    .ed-done-note { margin: 4px 0 12px; padding: 10px 12px; border-radius: 10px; background: #fff4e5; border: 1px solid #f3d19c; color: #6b3f00; font-weight: 700; font-size: 14px; }
+    .ed-sample-line { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; padding: 10px 12px; border-radius: 10px; background: #fdecec; font-size: 14px; }
+    .ed-box-note { margin: 0 0 12px; padding: 8px 10px; border-radius: 8px; background: #eef2f7; color: var(--navy-ink); font-size: 14px; font-weight: 700; }
+
+    /* 점검·저장 */
+    .ed-state { margin: 0 0 10px; padding: 10px 12px; border-radius: 10px; font-weight: 800; }
+    .ed-state.is-ok { background: #e6f5ee; color: #14573a; }
+    .ed-state.is-bad { background: #fdecec; color: #a12020; }
+    .ed-state.is-off { background: #eef0f3; color: #374151; }
+    .ed-probs, .ed-warns { list-style: none; padding: 0; margin: 0 0 10px; display: grid; gap: 6px; }
+    .ed-probs button { display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 8px; border: 1px solid #e3a3a3; background: #fff6f6; color: #8f1d1d; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .ed-probs button::after { content: " → 입력"; font-weight: 700; color: #8f1d1d; text-decoration: underline; }
+    .ed-warns li { padding: 8px 10px; border-radius: 8px; border: 1px solid #e0b46a; background: #fff8ec; color: #6b3f00; font-size: 14px; }
+    .ed-sub { font-size: 14px; font-weight: 800; margin: 12px 0 6px; }
+    .ed-btns { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .ed-steps { margin: 10px 0; padding-left: 22px; display: grid; gap: 6px; font-size: 14px; }
+    .ed-save-state { margin: 0 0 4px; font-weight: 800; }
+    .ed-save-state.is-dirty { color: #7a4a00; }
+    .ed-save-state.is-done { color: #14573a; }
+    .ed-save-state.is-clean { color: #14573a; }
+    .ed-save-state.is-bad { color: #a12020; }
+    .ed-setup { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    .ed-setup summary { cursor: pointer; font-weight: 700; }
+    .ed-setup code { overflow-wrap: anywhere; }
+
+    /* 위쪽 알림: 임시 저장본 고르기 · 불러오기 실패 */
+    .ed-choice { margin-bottom: 16px; padding: 14px 16px; border-radius: 12px; background: #fff4e5; border: 2px solid #c98a1b; color: #4a2c00; }
+    .ed-choice h2 { font-size: 18px; margin-bottom: 6px; }
+    .ed-choice p, .ed-choice ul { margin: 0 0 8px; font-size: 14px; }
+    .ed-choice ul { padding-left: 20px; }
+    .ed-choice:focus { outline: 3px solid var(--navy-ink); outline-offset: 2px; }
+    .ed-load-error { background: #fdecec; color: #6f1414; border: 2px solid #c9363b; border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; font-weight: 700; }
+    .ed-load-error p { margin: 0 0 8px; }
+    .ed-load-error .ed-hint { color: #6f1414; font-weight: 600; }
+
+    /* 모바일 하단 바 · 알림 */
+    .ed-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 6px; padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); background: var(--navy); box-shadow: 0 -2px 10px rgb(0 0 0 / .15); }
+    .ed-bar a { min-width: 0; padding: 11px 10px; border-radius: 10px; font-weight: 800; text-decoration: none; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ed-bar .ed-bar-state { flex: 1; color: #fff; background: rgb(255 255 255 / .14); }
+    .ed-bar .ed-bar-state.is-ok { background: #1d7a52; }
+    .ed-bar .ed-bar-state.is-bad { background: #b42323; }
+    .ed-bar .ed-bar-save { flex: none; background: var(--gold); color: var(--navy-ink); }
+    .ed-bar .ed-bar-save .ed-dot { display: none; margin-left: 4px; color: #a12020; }
+    .ed-bar .ed-bar-save.is-dirty .ed-dot, .ed-bar .ed-bar-save.is-done .ed-dot { display: inline; }
+    .ed-bar .ed-bar-save.is-done .ed-dot { color: #14573a; }
+    .ed-bar .ed-bar-list { flex: none; color: #fff; border: 1px solid rgb(255 255 255 / .45); }
+    .ed-bar :focus-visible { outline-color: var(--gold); }
+    @media (min-width: 1100px) { .ed-bar { display: none !important; } }
+    .ed-toast { position: fixed; left: 50%; bottom: 84px; z-index: 40; transform: translate(-50%, 20px); width: max-content; max-width: calc(100% - 32px); display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 12px 16px; border-radius: 12px; background: #111a26; color: #fff; font-size: 14px; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+    .ed-toast.is-show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+    .ed-toast :focus-visible { outline-color: var(--gold); }
+    @media (min-width: 1100px) { .ed-toast { bottom: 24px; } }
+    @media (prefers-reduced-motion: reduce) { .ed-toast { transition: none; } }
+  </style>
+</head>
+<body data-root="../" class="ed-body">
+  <a class="skip" href="#formPane">입력 화면으로 바로가기</a>
+  <header class="top">
+    <div class="wrap ed-wide top-in">
+      <a class="brand" href="../"><span class="logo" aria-hidden="true">⌂</span><span>매물 관리</span></a>
+      <nav class="ed-nav" aria-label="관리 메뉴">
+        <a href="youtube.html">유튜브 설명란</a>
+        <a href="../">홈페이지</a>
+      </nav>
+      <a class="ed-pill" id="dirtyPill" href="#exportPanel">불러오는 중…</a>
+    </div>
+  </header>
+  <div class="notice" id="loadNotice" role="status" hidden></div>
+
+  <div class="wrap ed-wide page">
+    <div class="ed-intro">
+      <div>
+        <h1>매물 편집기</h1>
+        <p class="muted small">여기서 매물을 고친 뒤 <b>listings.json 내려받기 → GitHub에 올리기</b>만 하면 홈페이지에 반영됩니다. JSON 파일을 직접 고칠 필요가 없습니다.</p>
+      </div>
+      <p class="small"><a href="youtube.html">유튜브 설명란 만들기</a> · <a href="../">홈페이지 보기</a></p>
+    </div>
+
+    <!-- 홈페이지의 listings.json 을 못 불러오면: 편집·내려받기를 막고 파일 불러오기만 허용 -->
+    <div class="ed-load-error" id="loadError" role="alert" hidden>
+      <p id="loadErrorText"></p>
+      <p class="ed-hint">이 상태에서는 매물을 고치거나 내려받을 수 없습니다 — 빈 목록이 홈페이지 매물을 덮어쓰는 사고를 막기 위해서입니다.
+        전에 내려받은 listings.json 이 있으면 아래 버튼으로 열어 이어서 작업할 수 있습니다.</p>
+      <button class="btn navy ed-sm" type="button" id="btnImportErr">파일에서 불러오기</button>
+    </div>
+
+    <!-- 이 브라우저의 임시 저장본이 지금 홈페이지 파일보다 오래된 경우 -->
+    <section class="ed-choice" id="draftChoice" aria-labelledby="draftChoiceTitle" tabindex="-1" hidden>
+      <h2 id="draftChoiceTitle">임시 저장본과 홈페이지 파일이 다릅니다</h2>
+      <p id="draftChoiceText"></p>
+      <ul id="draftChoiceList"></ul>
+      <div class="ed-btns">
+        <button class="btn navy" type="button" id="btnUseServer">불러온 원본 사용</button>
+        <button class="btn gold" type="button" id="btnUseDraft">임시 저장본 사용</button>
+      </div>
+      <p class="small">불러온 원본 = 지금 홈페이지에 올라가 있는 listings.json (임시 저장본은 지웁니다).
+        임시 저장본 사용 = 이 브라우저에서 고친 매물만 최신 파일 위에 다시 적용합니다 (다른 매물은 최신 파일 그대로).</p>
+    </section>
+
+    <div class="ed" id="ed">
+      <!-- 매물 목록 -->
+      <section class="ed-pane-list panel" id="listPane" aria-labelledby="listTitle" tabindex="-1">
+        <div class="ed-lp-head">
+          <h2 id="listTitle">매물 목록 <span class="count" id="listCount"></span></h2>
+          <button class="btn gold ed-sm" type="button" id="btnNew">+ 새 매물</button>
+        </div>
+        <div class="chips ed-lp-filter" role="group" aria-label="목록 거르기">
+          <button class="chip" type="button" data-filter="all" aria-pressed="true">전체</button>
+          <button class="chip" type="button" data-filter="ok" aria-pressed="false">게시 가능</button>
+          <button class="chip" type="button" data-filter="bad" aria-pressed="false">누락 있음</button>
+          <button class="chip" type="button" data-filter="off" aria-pressed="false">계약완료·샘플</button>
+        </div>
+        <div class="ed-sample-box" id="sampleBox" hidden>
+          <p class="small"><span class="ed-tag ed-tag-sample">샘플</span> 예시 매물 <b id="sampleCount">0</b>개가 있습니다. 실제 매물을 올리면 지워 주세요 (존재하지 않는 매물 광고 금지).</p>
+          <button class="btn ghost ed-sm ed-danger" type="button" id="btnDelSamples">샘플 매물 모두 삭제</button>
+        </div>
+        <ul class="ed-lp-list" id="list"></ul>
+        <p class="empty" id="listEmpty" hidden>해당하는 매물이 없습니다.</p>
+      </section>
+
+      <!-- 입력 폼 -->
+      <main class="ed-pane-form" id="formPane" tabindex="-1">
+        <div class="panel" id="emptyState">
+          <h2>매물을 고르세요</h2>
+          <p>목록에서 <b>편집</b>을 누르거나 <b>+ 새 매물</b>로 새로 등록하세요.</p>
+          <p class="muted small">입력한 내용은 이 브라우저에 자동 보관되고, <b>게시 점검</b> 칸에서 광고 명시사항이 빠졌는지 바로 확인할 수 있습니다.</p>
+        </div>
+
+        <form id="form" class="ed-form" hidden novalidate autocomplete="off">
+          <div class="panel ed-form-head" id="formHead" tabindex="-1">
+            <h2 id="formTitle">No.<span id="fhNo"></span> <span id="fhTitle"></span></h2>
+            <div class="ed-row">
+              <a class="btn ghost ed-sm" id="ytLink" href="youtube.html">유튜브 설명란 만들기</a>
+              <button class="btn ghost ed-sm" type="button" id="btnDupSel">이 매물 복제</button>
+              <button class="btn ghost ed-sm ed-danger" type="button" id="btnDelSel">이 매물 삭제</button>
+            </div>
+          </div>
+
+          <!-- 1. 기본 -->
+          <section class="panel ed-sec" id="sec-basic" aria-labelledby="h-basic">
+            <h2 id="h-basic"><span class="ed-n" aria-hidden="true">1</span>기본</h2>
+            <div class="ed-sample-line" id="sampleLine" hidden>
+              <span class="ed-tag ed-tag-sample">샘플</span>
+              <span>예시 매물이라 홈페이지에 게시되지 않습니다.</span>
+              <button class="btn ghost ed-sm" type="button" id="btnUnsample">실제 매물로 전환</button>
+            </div>
+            <div class="ed-g2">
+              <div class="ed-fld">
+                <label for="f-no">매물번호 <em class="ed-req">필수</em></label>
+                <input id="f-no" data-f="no" data-t="no" inputmode="numeric" aria-describedby="hint-no">
+                <p class="ed-hint" id="hint-no">영상 설명란의 "매물번호 1001"과 같은 번호입니다. 바꾸면 영상 설명란도 고쳐야 합니다.</p>
+              </div>
+              <div class="ed-fld">
+                <label for="f-updated">정보 갱신일</label>
+                <input id="f-updated" type="date" data-f="updated" aria-describedby="hint-updated">
+                <p class="ed-hint" id="hint-updated">내용을 고치면 오늘 날짜로 자동으로 바뀝니다.</p>
+              </div>
+            </div>
+            <fieldset class="ed-fld">
+              <legend class="ed-lbl">거래 상태</legend>
+              <div class="ed-seg">
+                <label><input type="radio" name="status" value="거래중" data-f="status"><span>거래중</span></label>
+                <label><input type="radio" name="status" value="계약완료" data-f="status"><span>계약완료</span></label>
+              </div>
+            </fieldset>
+            <p class="ed-done-note" id="doneNote" hidden>계약 통보 후 3일 안에 광고 삭제 의무 — 유튜브 영상도 비공개로 돌리세요. (계약완료 매물은 홈페이지에서 자동으로 빠집니다)</p>
+            <div class="ed-checks">
+              <label class="check"><input type="checkbox" id="f-featured" data-f="featured" data-t="bool"> <span>추천 매물 (첫 화면 강조)</span></label>
+              <label class="check"><input type="checkbox" id="f-urgent" data-f="urgent" data-t="bool"> <span>급매</span></label>
+            </div>
+            <div class="ed-fld">
+              <label for="f-title">제목 <em class="ed-req">필수</em></label>
+              <input id="f-title" data-f="title" maxlength="80" placeholder="예: 지평면 남향 전원주택 · 대지 170평" aria-describedby="hint-title">
+              <p class="ed-hint" id="hint-title">'역대급·무조건·최저가' 같은 과장 표현은 쓰지 마세요.</p>
+            </div>
+            <div class="ed-g2">
+              <div class="ed-fld">
+                <label for="f-type">매물 종류 <em class="ed-req">필수</em></label>
+                <select id="f-type"></select>
+                <label class="sr" for="f-type-custom">매물 종류 직접 입력</label>
+                <input id="f-type-custom" placeholder="예: 근린생활시설" hidden>
+              </div>
+              <fieldset class="ed-fld">
+                <legend class="ed-lbl">거래 형태 <em class="ed-req">필수</em></legend>
+                <div class="ed-seg" id="seg-deal">
+                  <label><input type="radio" name="deal" value="매매" data-f="deal"><span>매매</span></label>
+                  <label><input type="radio" name="deal" value="전세" data-f="deal"><span>전세</span></label>
+                  <label><input type="radio" name="deal" value="월세" data-f="deal"><span>월세</span></label>
+                  <label><input type="radio" name="deal" value="단기임대" data-f="deal"><span>단기임대</span></label>
+                </div>
+              </fieldset>
+            </div>
+          </section>
+
+          <!-- 2. 가격 -->
+          <section class="panel ed-sec" id="sec-price" aria-labelledby="h-price">
+            <h2 id="h-price"><span class="ed-n" aria-hidden="true">2</span>가격 <span class="ed-unit">(만원 단위)</span></h2>
+            <p class="ed-hint" id="hint-price" style="margin-bottom:12px">숫자만 만원 단위로 적습니다 — 3억 2천만원은 <b>32000</b>. "3억 2천"이나 "300,000원"이라고 써도 만원 단위로 바꿔 드립니다.
+              '협의'·'비공개'·범위(2~3억) 표시는 법 위반이라 쓸 수 없습니다.</p>
+            <p class="ed-box-note" id="priceNote" role="status" hidden></p>
+            <div class="ed-g3">
+              <div class="ed-fld" id="fld-price">
+                <label for="f-price">매매가 <em class="ed-req">필수</em></label>
+                <input id="f-price" data-f="price" data-t="money" inputmode="numeric" placeholder="예: 32000" aria-describedby="pv-price hint-price">
+                <output class="ed-pv" id="pv-price" for="f-price"></output>
+              </div>
+              <div class="ed-fld" id="fld-deposit">
+                <label for="f-deposit"><span id="lbl-deposit">보증금</span> <em class="ed-req">필수</em></label>
+                <input id="f-deposit" data-f="deposit" data-t="money" inputmode="numeric" placeholder="예: 3000" aria-describedby="pv-deposit hint-price">
+                <output class="ed-pv" id="pv-deposit" for="f-deposit"></output>
+              </div>
+              <div class="ed-fld" id="fld-monthly">
+                <label for="f-monthly"><span id="lbl-monthly">월세</span> <em class="ed-req">필수</em></label>
+                <input id="f-monthly" data-f="monthly" data-t="money" inputmode="numeric" placeholder="예: 150" aria-describedby="pv-monthly hint-price">
+                <output class="ed-pv" id="pv-monthly" for="f-monthly"></output>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. 소재지 -->
+          <section class="panel ed-sec" id="sec-region" aria-labelledby="h-region">
+            <h2 id="h-region"><span class="ed-n" aria-hidden="true">3</span>소재지</h2>
+            <div class="ed-g4">
+              <div class="ed-fld"><label for="f-sido">시·도 <em class="ed-req">필수</em></label><input id="f-sido" data-f="region.sido"></div>
+              <div class="ed-fld"><label for="f-sigungu">시·군·구 <em class="ed-req">필수</em></label><input id="f-sigungu" data-f="region.sigungu"></div>
+              <div class="ed-fld"><label for="f-eupmyeon">읍·면·동 <em class="ed-req">필수</em></label><input id="f-eupmyeon" data-f="region.eupmyeon" list="dl-eupmyeon" placeholder="예: 지평면"></div>
+              <div class="ed-fld"><label for="f-ri">리 <em class="ed-req" id="req-ri" hidden>필수</em></label><input id="f-ri" data-f="region.ri" placeholder="예: 망미리" aria-describedby="hint-ri"><p class="ed-hint" id="hint-ri">읍·면 지역은 리까지 꼭 적습니다.</p></div>
+            </div>
+            <datalist id="dl-eupmyeon"></datalist>
+            <div class="ed-g2">
+              <div class="ed-fld">
+                <label for="f-jibun">지번 (사무소 기록용 · 홈페이지에는 표시 안 함)</label>
+                <input id="f-jibun" data-f="region.jibun" placeholder="예: 123-4" aria-describedby="hint-jibun">
+                <p class="ed-hint" id="hint-jibun">비워 둬도 됩니다. 사무소 원칙상 홈페이지에는 리까지만 보이고, 정확한 위치는 상담할 때 안내합니다.</p>
+              </div>
+              <div class="ed-fld">
+                <span class="ed-lbl" aria-hidden="true">&nbsp;</span>
+                <label class="check"><input type="checkbox" id="f-showJibun" data-f="region.showJibun" data-t="bool" aria-describedby="pv-region"> <span>이 매물은 지번 공개</span></label>
+              </div>
+            </div>
+            <output class="ed-pv-line" id="pv-region" for="f-sido f-sigungu f-eupmyeon f-ri f-jibun f-showJibun"></output>
+          </section>
+
+          <!-- 4. 토지 -->
+          <section class="panel ed-sec" id="sec-land" aria-labelledby="h-land">
+            <h2 id="h-land"><span class="ed-n" aria-hidden="true">4</span>토지</h2>
+            <label class="ed-switch"><input type="checkbox" id="hasLand" aria-controls="landBody" aria-expanded="false"> 토지 정보 있음</label>
+            <p class="ed-hint" id="landOffHint">건물이 없는 매물(토지·임야)은 토지 면적과 지목이 꼭 필요합니다.</p>
+            <p class="ed-box-note" id="landEmptyNote" hidden>토지 칸이 모두 비어 있어 '토지 정보 없음'으로 저장됩니다 (아파트·상가 호실처럼 토지가 따로 없는 매물은 그대로 두면 됩니다).</p>
+            <div class="ed-sec-body" id="landBody" hidden>
+              <div class="ed-g2">
+                <div class="ed-fld">
+                  <label for="f-land-area">토지 면적 (㎡, 토지대장 기준) <em class="ed-req" id="req-land-area">필수</em></label>
+                  <input id="f-land-area" data-f="land.area" data-t="area" inputmode="decimal" placeholder="예: 1537.2" aria-describedby="pv-land-area">
+                  <output class="ed-pv" id="pv-land-area" for="f-land-area"></output>
+                  <div class="ed-py"><label for="py-land">평으로 입력</label><input id="py-land" class="ed-py-in" inputmode="decimal" placeholder="평"><button class="btn ghost ed-sm" type="button" data-py="f-land-area">㎡로 바꾸기</button></div>
+                </div>
+                <div class="ed-fld">
+                  <label for="f-jimok">지목 <em class="ed-req" id="req-jimok">필수</em></label>
+                  <select id="f-jimok" data-f="land.jimok" aria-describedby="hint-jimok"></select>
+                  <p class="ed-hint" id="hint-jimok">토지대장에 적힌 지목 (28종)</p>
+                </div>
+              </div>
+              <div class="ed-fld">
+                <label for="f-zoning">용도지역</label>
+                <input id="f-zoning" data-f="land.zoning" placeholder="예: 계획관리지역" aria-describedby="hint-zoning">
+                <p class="ed-hint" id="hint-zoning">아래에서 누르면 들어갑니다. 두 개 이상에 걸친 땅이면 모두 누르세요 (쉼표로 이어짐).</p>
+                <div class="ed-zchips" id="zoningChips" role="group" aria-label="용도지역 고르기"></div>
+              </div>
+              <div class="ed-g2">
+                <div class="ed-fld"><label for="f-currentUse">현 이용상태</label><input id="f-currentUse" data-f="land.currentUse" list="dl-use" placeholder="예: 나대지"></div>
+                <div class="ed-fld"><label for="f-road">도로 조건</label><input id="f-road" data-f="land.road" list="dl-road" placeholder="예: 4m 포장도로 접함"></div>
+              </div>
+              <datalist id="dl-use"><option value="나대지"><option value="주택부지"><option value="농지(경작 중)"><option value="농지(휴경)"><option value="임야"><option value="과수원"><option value="창고부지"><option value="주차장"><option value="잡종지"></datalist>
+              <datalist id="dl-road"><option value="4m 포장도로 접함"><option value="6m 포장도로 접함"><option value="8m 이상 도로 접함"><option value="비포장도로 접함"><option value="현황도로 접함"><option value="맹지(도로 없음)"></datalist>
+            </div>
+          </section>
+
+          <!-- 5. 건물 -->
+          <section class="panel ed-sec" id="sec-building" aria-labelledby="h-building">
+            <h2 id="h-building"><span class="ed-n" aria-hidden="true">5</span>건물</h2>
+            <label class="ed-switch"><input type="checkbox" id="hasBuilding" aria-controls="buildingBody" aria-expanded="false"> 건물 있음</label>
+            <div class="ed-sec-body" id="buildingBody" hidden>
+              <div class="ed-fld">
+                <label for="f-b-use">건축물대장 주용도</label>
+                <select id="f-b-use" data-f="building.use" aria-describedby="hint-b-use"></select>
+                <p class="ed-hint" id="hint-b-use">건축물대장 '주용도' 칸에 적힌 그대로 고르세요 (예: 단독주택, 제2종 근린생활시설). 비워 둬도 게시는 됩니다.</p>
+              </div>
+              <label class="check"><input type="checkbox" id="f-b-violation" data-f="building.violation" data-t="bool"> <span>건축물대장상 <b>위반건축물</b>입니다 (해당하면 꼭 체크 — 광고에 표시됩니다)</span></label>
+              <div class="ed-g2">
+                <div class="ed-fld">
+                  <label for="f-b-area">전용면적 (㎡) <em class="ed-req">필수</em></label>
+                  <input id="f-b-area" data-f="building.area" data-t="area" inputmode="decimal" placeholder="예: 84.5" aria-describedby="pv-b-area">
+                  <output class="ed-pv" id="pv-b-area" for="f-b-area"></output>
+                  <div class="ed-py"><label for="py-b">평으로 입력</label><input id="py-b" class="ed-py-in" inputmode="decimal" placeholder="평"><button class="btn ghost ed-sm" type="button" data-py="f-b-area">㎡로 바꾸기</button></div>
+                </div>
+                <div class="ed-fld">
+                  <label for="f-b-approvalDate">사용승인일 <em class="ed-req">필수</em></label>
+                  <input id="f-b-approvalDate" data-f="building.approvalDate" data-t="ymd" inputmode="numeric" placeholder="예: 2015-03-20" aria-describedby="hint-b-approvalDate">
+                  <p class="ed-hint" id="hint-b-approvalDate">건축물대장의 사용승인일 (날짜를 모르면 2015-03 처럼 월까지)</p>
+                </div>
+              </div>
+              <div class="ed-g3">
+                <div class="ed-fld"><label for="f-b-totalFloors">총 층수 <em class="ed-req">필수</em></label><input id="f-b-totalFloors" data-f="building.totalFloors" data-t="int" inputmode="numeric" placeholder="예: 2"></div>
+                <div class="ed-fld"><label for="f-b-floor">해당 층 <em class="ed-req" id="req-floor" hidden>필수</em></label><input id="f-b-floor" data-f="building.floor" placeholder="예: 1층, 저층" aria-describedby="hint-floor"></div>
+                <div class="ed-fld"><label for="f-b-rooms">방 수 <em class="ed-req" id="req-rooms">필수</em></label><input id="f-b-rooms" data-f="building.rooms" data-t="int" inputmode="numeric" aria-describedby="hint-rooms"></div>
+                <div class="ed-fld"><label for="f-b-baths">욕실 수 <em class="ed-req">필수</em></label><input id="f-b-baths" data-f="building.baths" data-t="int" inputmode="numeric"></div>
+                <div class="ed-fld"><label for="f-b-parking">주차 대수 <em class="ed-req">필수</em></label><input id="f-b-parking" data-f="building.parking" data-t="int" inputmode="numeric" placeholder="없으면 0"></div>
+              </div>
+              <p class="ed-hint" id="hint-rooms" style="margin:-6px 0 4px">방 수·관리비는 주택(전원주택·아파트·빌라·펜션 등)일 때만 필수입니다.</p>
+              <p class="ed-hint" id="hint-floor" style="margin:0 0 12px">아파트·빌라·오피스텔 등 공동주택은 해당 층이 필수입니다 (저·중·고층으로 적어도 됩니다).</p>
+              <div class="ed-fld">
+                <label for="f-b-dir">방향 (건물이 바라보는 방향) <em class="ed-req">필수</em></label>
+                <select id="f-b-dir" aria-describedby="pv-direction hint-direction"></select>
+                <label class="sr" for="f-b-direction">방향 직접 입력</label>
+                <input id="f-b-direction" data-f="building.direction" placeholder="예: 남동향(거실 기준)" aria-describedby="pv-direction hint-direction" hidden>
+                <output class="ed-pv" id="pv-direction" for="f-b-dir f-b-direction"></output>
+                <p class="ed-hint" id="hint-direction">건물 정면이 바라보는 방향을 고르면 홈페이지에 '(건물 정면 기준)'이 함께 표시됩니다. 거실 방향 등 다른 기준으로 적으려면 '직접 입력'에서 '남동향(거실 기준)'처럼 적으세요.</p>
+              </div>
+              <div class="ed-fld">
+                <label for="f-b-moveIn">입주가능일 <em class="ed-req">필수</em></label>
+                <input id="f-b-moveIn" data-f="building.moveIn" placeholder="예: 즉시입주 / 2026-12-01 / 11월 중순" aria-describedby="hint-moveIn">
+                <div class="ed-quick">
+                  <button class="chip" type="button" id="mi-now">즉시입주</button>
+                  <label class="sr" for="mi-date">날짜로 고르기</label>
+                  <input type="date" id="mi-date">
+                  <label class="sr" for="mi-month">월</label>
+                  <select id="mi-month"></select>
+                  <label class="sr" for="mi-part">초·중·하순</label>
+                  <select id="mi-part"><option>초순</option><option>중순</option><option>하순</option></select>
+                  <button class="btn ghost ed-sm" type="button" id="mi-apply">넣기</button>
+                </div>
+                <p class="ed-hint" id="hint-moveIn">'즉시입주', 날짜(2026-11-01), 협의가 가능하면 '11월 중순'처럼 적습니다. '협의'만 쓰면 게시되지 않습니다.</p>
+              </div>
+              <div class="ed-fld">
+                <label for="f-b-maintenance">관리비 <em class="ed-req" id="req-maint">필수</em></label>
+                <input id="f-b-maintenance" data-f="building.maintenance" placeholder="예: 없음 / 월 5만원 / 월 25만원(일반관리비 15만원, 사용료 10만원)" aria-describedby="hint-maint">
+                <div class="ed-quick"><button class="chip" type="button" id="mt-none">없음</button></div>
+                <p class="ed-hint" id="hint-maint">정액 관리비가 월 10만원 이상이면 '월 25만원(일반관리비 15만원, 사용료 10만원)'처럼 나눠 적어야 게시됩니다.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- 6. 설명 -->
+          <section class="panel ed-sec" id="sec-desc" aria-labelledby="h-desc">
+            <h2 id="h-desc"><span class="ed-n" aria-hidden="true">6</span>설명</h2>
+            <div class="ed-fld">
+              <label for="f-summary">한 줄 요약 (매물 카드에 보임)</label>
+              <input id="f-summary" data-f="summary" maxlength="80" placeholder="예: 전기·정화조·지하수 완료, 지평역 차량 5분." aria-describedby="hint-summary">
+              <p class="ed-hint" id="hint-summary"><span id="sumCount">0</span>/80자</p>
+            </div>
+            <div class="ed-fld">
+              <label for="f-description">상세 설명</label>
+              <textarea id="f-description" data-f="description" rows="6" placeholder="줄을 바꿔 가며 편하게 적으세요."></textarea>
+            </div>
+            <div class="ed-fld ed-tagbox" data-tags="features" data-name="특징" data-sugg="남향,지하수,상수도,전기 인입,정화조,진입로 포장,도로 접함,하천 조망,산 조망,마을 인근,역세권,IC 인근,주차 넉넉,텃밭,리모델링,신축">
+              <label for="tag-features">특징</label>
+              <ul class="ed-taglist" aria-label="입력된 특징"></ul>
+              <div class="ed-addrow"><input id="tag-features" placeholder="예: 남향 (Enter로 추가)"><button class="btn ghost ed-sm" type="button">추가</button></div>
+              <div class="chips ed-sugg" role="group" aria-label="자주 쓰는 특징"></div>
+            </div>
+            <div class="ed-fld ed-tagbox" data-tags="recommendedUse" data-name="추천 용도" data-sugg="전원주택지,주말농장,세컨하우스,창고부지,카페·음식점,펜션·캠핑장,공장부지,귀농·귀촌,농막·쉼터,투자용">
+              <label for="tag-recommendedUse">추천 용도</label>
+              <ul class="ed-taglist" aria-label="입력된 추천 용도"></ul>
+              <div class="ed-addrow"><input id="tag-recommendedUse" placeholder="예: 주말농장 (Enter로 추가)"><button class="btn ghost ed-sm" type="button">추가</button></div>
+              <div class="chips ed-sugg" role="group" aria-label="자주 쓰는 추천 용도"></div>
+            </div>
+          </section>
+
+          <!-- 7. 영상·사진 -->
+          <section class="panel ed-sec" id="sec-media" aria-labelledby="h-media">
+            <h2 id="h-media"><span class="ed-n" aria-hidden="true">7</span>영상 · 사진</h2>
+            <div class="ed-fld">
+              <label for="f-video-in">유튜브 영상 주소 (또는 영상 ID)</label>
+              <div class="ed-addrow"><input id="f-video-in" placeholder="https://youtu.be/… 또는 https://www.youtube.com/shorts/…" aria-describedby="videoErr hint-video"><button class="btn navy ed-sm" type="button" id="btnAddVideo">추가</button></div>
+              <p class="ed-ferr" id="videoErr" role="alert" hidden></p>
+              <p class="ed-hint" id="hint-video">유튜브의 '공유' 주소를 그대로 붙여 넣으세요. 영상 설명란에 "매물번호 <span id="hintNo">1001</span>"을 넣었다면 여기는 비워 둬도 자동 연결됩니다.</p>
+              <ul class="ed-vlist" id="videoList" aria-label="연결된 영상"></ul>
+            </div>
+            <div class="ed-fld">
+              <label for="f-photo-in">사진 파일 이름</label>
+              <div class="ed-addrow"><input id="f-photo-in" placeholder="예: 1005-1.jpg" aria-describedby="photoErr hint-photo"><button class="btn ghost ed-sm" type="button" id="btnAddPhoto">추가</button></div>
+              <p class="ed-ferr" id="photoErr" role="alert" hidden></p>
+              <p class="ed-hint" id="hint-photo">사진은 먼저 GitHub의 <b>public/images</b> 폴더에 올린 뒤 파일 이름을 적으세요 (여러 장은 쉼표로 구분). 첫 번째 사진이 대표 사진입니다.</p>
+              <ul class="ed-vlist" id="photoList" aria-label="연결된 사진"></ul>
+            </div>
+          </section>
+
+          <!-- 8. 지도 좌표 -->
+          <section class="panel ed-sec" id="sec-map" aria-labelledby="h-map">
+            <h2 id="h-map"><span class="ed-n" aria-hidden="true">8</span>지도 좌표 <span class="ed-unit">(선택)</span></h2>
+            <p class="ed-hint" id="hint-map" style="margin-bottom:12px">지도에 표시할 <b>대략적인 위치</b>(마을·리 중심)입니다. 정확한 지번 위치는 넣지 마세요.
+              지도 앱에서 복사한 "37.471, 127.632" 를 위도 칸에 한 번에 붙여 넣어도 됩니다.</p>
+            <div class="ed-g2">
+              <div class="ed-fld"><label for="f-lat">위도</label><input id="f-lat" data-f="lat" data-t="num" inputmode="decimal" placeholder="예: 37.471" aria-describedby="hint-map"></div>
+              <div class="ed-fld"><label for="f-lng">경도</label><input id="f-lng" data-f="lng" data-t="num" inputmode="decimal" placeholder="예: 127.632" aria-describedby="hint-map"></div>
+            </div>
+            <div class="ed-row">
+              <button class="btn ghost ed-sm" type="button" id="btnRound">소수점 3자리로 줄이기</button>
+              <button class="btn ghost ed-sm" type="button" id="btnClearCoord">좌표 지우기</button>
+              <a class="btn ghost ed-sm" id="mapLink" target="_blank" rel="noopener" hidden>카카오맵에서 위치 확인</a>
+            </div>
+          </section>
+        </form>
+      </main>
+
+      <div class="ed-pane-side">
+        <!-- 게시 점검 -->
+        <section class="panel" id="checkPanel" aria-labelledby="checkTitle" tabindex="-1">
+          <h2 id="checkTitle">게시 점검</h2>
+          <p class="ed-state is-off" id="checkState">불러오는 중…</p>
+          <ul class="ed-probs" id="checkProblems" aria-label="빠진 항목 (게시 불가)"></ul>
+          <p class="ed-sub" id="warnTitle" hidden>확인해 주세요 (게시는 가능)</p>
+          <ul class="ed-warns" id="checkWarnings" aria-label="확인할 항목"></ul>
+          <p class="ed-hint" id="checkHelp">빨간 항목을 누르면 해당 입력칸으로 이동합니다. 근거: 공인중개사법 제18조의2 · 시행령 제17조의2 · 국토부 명시사항 세부기준(2025.1.1.)</p>
+        </section>
+
+        <!-- 저장하기 -->
+        <section class="panel" id="exportPanel" aria-labelledby="exportTitle" tabindex="-1">
+          <h2 id="exportTitle">저장하기 (홈페이지 반영)</h2>
+          <p class="ed-save-state is-clean" id="saveState">변경 없음</p>
+          <p class="ed-hint" id="autosaveNote"></p>
+          <div class="ed-btns">
+            <button class="btn gold" type="button" id="btnDownload">listings.json 내려받기</button>
+            <button class="btn navy" type="button" id="btnCopy">JSON 복사</button>
+            <a class="btn ghost" id="btnGithub" target="_blank" rel="noopener" hidden>GitHub에서 listings.json 열기</a>
+          </div>
+          <ol class="ed-steps">
+            <li><b>내려받기</b> — 위 버튼으로 고친 listings.json 파일을 받습니다.</li>
+            <li><b>GitHub 편집 화면</b>(public/data/listings.json → 연필 아이콘)에서 내용을 전부 지우고 'JSON 복사'한 것을 붙여 넣습니다. 또는 public/data 폴더에서 <i>Add file → Upload files</i>로 받은 파일을 올립니다.</li>
+            <li>초록색 <b>Commit changes</b>를 누르면 몇 분 뒤 홈페이지에 반영됩니다.</li>
+          </ol>
+          <details class="ed-setup" id="githubHint" hidden>
+            <summary>GitHub 바로가기 버튼 만들기 (홈페이지 설정 담당자용)</summary>
+            <p>data/site.json 의 <code>admin.repoEditUrl</code> 에 GitHub 편집 화면 주소(https://github.com/아이디/저장소/edit/main/public/data/listings.json)를 넣으면 위에 바로가기 버튼이 생깁니다.</p>
+          </details>
+          <div class="ed-btns">
+            <button class="btn ghost ed-sm" type="button" id="btnImport">파일에서 불러오기</button>
+            <input type="file" id="importFile" accept=".json,application/json" hidden>
+            <button class="btn ghost ed-sm ed-danger" type="button" id="btnReset">처음 상태로 되돌리기</button>
+          </div>
+          <p class="ed-hint">작업 내용은 이 브라우저에만 임시 보관됩니다. 다른 기기에서 이어서 하려면 GitHub에 먼저 올리세요.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <nav class="ed-bar" id="edBar" aria-label="빠른 이동" hidden>
+    <a class="ed-bar-list" href="#listPane">목록</a>
+    <a class="ed-bar-state" id="barState" href="#checkPanel">점검</a>
+    <a class="ed-bar-save" id="barSave" href="#exportPanel">저장하기<span class="ed-dot" aria-hidden="true">●</span><span class="sr" id="barSaveSr"></span></a>
+  </nav>
+  <div class="ed-toast" id="toast" role="status" aria-live="polite"></div>
+  <p class="sr" id="srLive" role="status" aria-live="polite"></p>
+
+  <script src="../assets/js/common.js"></script>
+  <script src="../assets/js/rules.js"></script>
+  <script src="../assets/js/admin-listing.js"></script>
+</body>
+</html>
