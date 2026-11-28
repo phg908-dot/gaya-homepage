@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://phg908-dot.github.io/gaya-homepage/sitemap.xml
